@@ -15,8 +15,8 @@ namespace Things::Testing
         {
             AZ_TYPE_INFO(TestTable, "{5FFF733C-1C7A-4F3C-A957-307B56112113}");
 
-            int m_a = 0;                                     //!< A number.
-            AZStd::unordered_map<AZStd::string, int> m_b;    //!< Numbers by key.
+            int m_a = 0; //!< A number.
+            AZStd::unordered_map<AZStd::string, int> m_b; //!< Numbers by key.
         };
 
         //! The folder with the gem's test data.

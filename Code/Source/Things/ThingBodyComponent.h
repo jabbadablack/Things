@@ -42,7 +42,7 @@ namespace Things
 
     private:
         AZ::Data::Asset<AzFramework::Spawnable> m_prefab; //!< The body prefab.
-        AzFramework::EntitySpawnTicket m_ticket;          //!< Keeps the body spawned; releasing it despawns the body.
+        AzFramework::EntitySpawnTicket m_ticket; //!< Keeps the body spawned; releasing it despawns the body.
         AZStd::shared_ptr<AZStd::vector<AZ::EntityId>> m_bodyEntities; //!< The spawned entities, shared with the spawn callback.
     };
 } // namespace Things

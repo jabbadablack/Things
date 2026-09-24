@@ -99,7 +99,13 @@ namespace Things
                 root,
                 [&things](AZ::EntityId thing, AZ::u32 depth)
                 {
-                    AZ_Info("Things", "%*s%s %s\n", aznumeric_cast<int>(depth * 2), "", thing.ToString().c_str(), things.GetBlueprint(thing).c_str());
+                    AZ_Info(
+                        "Things",
+                        "%*s%s %s\n",
+                        aznumeric_cast<int>(depth * 2),
+                        "",
+                        thing.ToString().c_str(),
+                        things.GetBlueprint(thing).c_str());
                     return VisitAction::Continue;
                 });
         }
@@ -176,7 +182,10 @@ namespace Things
         AZ_CONSOLEFREEFUNC(things_reload, AZ::ConsoleFunctorFlags::Null, "Reads every blueprint file of the game and its mods again.");
         AZ_CONSOLEFREEFUNC(things_list, AZ::ConsoleFunctorFlags::Null, "Prints every top-level Thing and what it owns.");
         AZ_CONSOLEFREEFUNC(things_blueprints, AZ::ConsoleFunctorFlags::Null, "Prints the names of all blueprints.");
-        AZ_CONSOLEFREEFUNC(things_dump, AZ::ConsoleFunctorFlags::Null, "things_dump <blueprint or entity id>: prints a resolved blueprint or a Thing's tree.");
+        AZ_CONSOLEFREEFUNC(
+            things_dump,
+            AZ::ConsoleFunctorFlags::Null,
+            "things_dump <blueprint or entity id>: prints a resolved blueprint or a Thing's tree.");
     } // namespace
 
     void ThingSystemComponent::Reflect(AZ::ReflectContext* context)
@@ -309,7 +318,8 @@ namespace Things
         const rapidjson::Value* resolved = m_library.Resolve(blueprint);
         if (!resolved)
         {
-            AZ_Warning("Things", false, "'%s' can't be given '%s': there is no such blueprint.", GetBlueprint(owner).c_str(), blueprint.c_str());
+            AZ_Warning(
+                "Things", false, "'%s' can't be given '%s': there is no such blueprint.", GetBlueprint(owner).c_str(), blueprint.c_str());
             return AZ::EntityId();
         }
         return m_factory.Build(*resolved, blueprint, AZ::Transform::CreateIdentity(), owner);
@@ -476,7 +486,8 @@ namespace Things
             auto parsed = AZ::JsonSerializationUtils::ReadJsonFile(file.m_path.Native());
             if (!parsed.IsSuccess())
             {
-                AZ_Warning("Things", false, "Blueprint file '%s' could not be read and is skipped: %s", source.c_str(), parsed.GetError().c_str());
+                AZ_Warning(
+                    "Things", false, "Blueprint file '%s' could not be read and is skipped: %s", source.c_str(), parsed.GetError().c_str());
                 continue;
             }
             m_library.AddFile(parsed.GetValue(), source);

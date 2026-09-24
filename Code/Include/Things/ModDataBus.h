@@ -1,8 +1,8 @@
 #pragma once
 
 #include <AzCore/EBus/EBus.h>
-#include <AzCore/Interface/Interface.h>
 #include <AzCore/IO/Path/Path.h>
+#include <AzCore/Interface/Interface.h>
 #include <AzCore/JSON/document.h>
 #include <AzCore/Memory/SystemAllocator.h>
 #include <AzCore/RTTI/RTTI.h>
@@ -28,9 +28,9 @@ namespace Things
         static void Reflect(AZ::ReflectContext* context);
 
         AZStd::vector<AZStd::string> m_dataRoots = { "@products@" }; //!< Game data folders, read first, in order.
-        AZStd::vector<AZStd::string> m_modRoots = { "@user@/Mods" };  //!< Folders whose subfolders are mods.
-        AZStd::vector<AZStd::string> m_order;                         //!< Mod folder names that load first, in this order.
-        AZStd::vector<AZStd::string> m_disabled;                      //!< Mod folder names that are not loaded.
+        AZStd::vector<AZStd::string> m_modRoots = { "@user@/Mods" }; //!< Folders whose subfolders are mods.
+        AZStd::vector<AZStd::string> m_order; //!< Mod folder names that load first, in this order.
+        AZStd::vector<AZStd::string> m_disabled; //!< Mod folder names that are not loaded.
     };
 
     //! Settings Registry path of the ModDataConfig.
@@ -40,14 +40,14 @@ namespace Things
     struct DataRoot
     {
         AZStd::string m_name; //!< "Game" for a data root, otherwise the mod's folder name.
-        AZ::IO::Path m_path;  //!< The folder, possibly starting with an alias such as @products@.
+        AZ::IO::Path m_path; //!< The folder, possibly starting with an alias such as @products@.
     };
 
     //! A data file found under one of the roots.
     struct DataFile
     {
-        AZStd::string m_root;        //!< Name of the root the file is in.
-        AZ::IO::Path m_path;         //!< Full path, possibly starting with an alias.
+        AZStd::string m_root; //!< Name of the root the file is in.
+        AZ::IO::Path m_path; //!< Full path, possibly starting with an alias.
         AZ::IO::Path m_relativePath; //!< Path below the root, which is what mods use to layer over the game's files.
     };
 

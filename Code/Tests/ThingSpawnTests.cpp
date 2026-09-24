@@ -4,7 +4,6 @@
 #include <AzCore/RTTI/BehaviorContext.h>
 #include <AzCore/Script/ScriptContext.h>
 #include <AzCore/std/chrono/chrono.h>
-#include <cstdio>
 #include <AzFramework/Components/TransformComponent.h>
 #include <AzTest/AzTest.h>
 #include <TestParts.h>
@@ -13,6 +12,7 @@
 #include <Things/ThingComponent.h>
 #include <Things/ThingFactory.h>
 #include <Things/ThingSystemBus.h>
+#include <cstdio>
 
 namespace Things::Testing
 {
@@ -169,7 +169,14 @@ namespace Things::Testing
     {
         const AZ::EntityId hero = Things().Spawn("Hero", AZ::Transform::CreateIdentity());
         const AZ::EntityId blade = Things().GetOwned(hero)[0];
-        EXPECT_EQ(SumTree(hero, [blade](AZ::EntityId thing) { return thing != blade; }), 11);
+        EXPECT_EQ(
+            SumTree(
+                hero,
+                [blade](AZ::EntityId thing)
+                {
+                    return thing != blade;
+                }),
+            11);
     }
 
     TEST_F(ThingSpawnTests, VisitCanStopEarly)
@@ -205,7 +212,14 @@ namespace Things::Testing
 
         EXPECT_TRUE(Things().Transfer(blade, AZ::EntityId()));
         EXPECT_EQ(Things().GetTopLevelThings().size(), 3u);
-        EXPECT_EQ(Things().FindAncestor(Things().GetOwned(hero)[0], [hero](AZ::EntityId id) { return id == hero; }), hero);
+        EXPECT_EQ(
+            Things().FindAncestor(
+                Things().GetOwned(hero)[0],
+                [hero](AZ::EntityId id)
+                {
+                    return id == hero;
+                }),
+            hero);
     }
 
     TEST_F(ThingSpawnTests, DestroyRemovesTheWholeTree)
@@ -264,7 +278,8 @@ namespace Things::Testing
         EXPECT_LT(spawnTime.count(), 5000) << "3300 Things took too long to build";
         printf(
             "[ TIMING   ] 3300 Things built in %lld ms; 300 tree queries in %lld us\n",
-            static_cast<long long>(spawnTime.count()), static_cast<long long>(queryTime.count()));
+            static_cast<long long>(spawnTime.count()),
+            static_cast<long long>(queryTime.count()));
     }
 
     TEST_F(ThingSpawnTests, LuaCanSpawnAndQueryThings)

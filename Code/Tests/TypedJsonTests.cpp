@@ -27,7 +27,8 @@ namespace Things::Testing
 
     TEST_F(TypedJsonTests, CreatesByClassNameAndLoadsValues)
     {
-        const rapidjson::Document json = Parse(R"({"$type": "TestValuePart", "Value": 4, "List": [1, 2], "Map": {"a": 0.5}, "Text": "hi"})");
+        const rapidjson::Document json =
+            Parse(R"({"$type": "TestValuePart", "Value": 4, "List": [1, 2], "Map": {"a": 0.5}, "Text": "hi"})");
         AZStd::unique_ptr<AZ::Component> component(CreateFromTypedJson<AZ::Component>(json, "test"));
         auto* part = azrtti_cast<TestValuePart*>(component.get());
         ASSERT_NE(part, nullptr);

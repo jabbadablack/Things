@@ -22,8 +22,7 @@ namespace Things
         {
             if (result.GetProcessing() != Processing::Completed || result.GetOutcome() == Outcomes::Skipped)
             {
-                AZ_Warning(
-                    "Things", false, "%s: %.*s (%s)", context.c_str(), AZ_STRING_ARG(message), result.ToString(path).c_str());
+                AZ_Warning("Things", false, "%s: %.*s (%s)", context.c_str(), AZ_STRING_ARG(message), result.ToString(path).c_str());
             }
             return result;
         };

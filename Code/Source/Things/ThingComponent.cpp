@@ -48,7 +48,9 @@ namespace Things
 
     void ThingComponent::SetOwner(AZ::EntityId owner)
     {
-        AZ_Assert(!GetEntity() || GetEntity()->GetState() < AZ::Entity::State::Activating, "Use Transfer to change the owner of an active Thing.");
+        AZ_Assert(
+            !GetEntity() || GetEntity()->GetState() < AZ::Entity::State::Activating,
+            "Use Transfer to change the owner of an active Thing.");
         m_owner = owner;
     }
 
@@ -60,7 +62,9 @@ namespace Things
     bool ThingComponent::HasTag(AZStd::string_view tag) const
     {
         return AZStd::binary_search(
-            m_tags.begin(), m_tags.end(), tag,
+            m_tags.begin(),
+            m_tags.end(),
+            tag,
             [](AZStd::string_view lhs, AZStd::string_view rhs)
             {
                 return lhs < rhs;

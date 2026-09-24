@@ -61,10 +61,10 @@ namespace Things::Testing
             total += m_value;
         }
 
-        int m_value = 0;                                    //!< A number.
-        AZStd::vector<int> m_list = { 7 };                  //!< A list with a default element.
-        AZStd::unordered_map<AZStd::string, float> m_map;   //!< A keyed map.
-        AZStd::string m_text;                               //!< A string.
+        int m_value = 0; //!< A number.
+        AZStd::vector<int> m_list = { 7 }; //!< A list with a default element.
+        AZStd::unordered_map<AZStd::string, float> m_map; //!< A keyed map.
+        AZStd::string m_text; //!< A string.
     };
 
     //! A second part type, to test type changes between layers.

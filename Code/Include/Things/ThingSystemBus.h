@@ -16,9 +16,9 @@ namespace Things
     //! What a tree visit does after visiting a Thing.
     enum class VisitAction : AZ::u8
     {
-        Continue,     //!< Visit the Things this one owns, then carry on.
+        Continue, //!< Visit the Things this one owns, then carry on.
         SkipChildren, //!< Don't visit the Things this one owns.
-        Stop,         //!< End the whole visit.
+        Stop, //!< End the whole visit.
     };
 
     //! Called for each Thing of an owned tree with its depth below the root (the root is 0).
@@ -100,8 +100,8 @@ namespace Things
     class ThingSystemBusTraits : public AZ::EBusTraits
     {
     public:
-        static constexpr AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Single;   //!< One handler.
-        static constexpr AZ::EBusAddressPolicy AddressPolicy = AZ::EBusAddressPolicy::Single;   //!< One address.
+        static constexpr AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Single; //!< One handler.
+        static constexpr AZ::EBusAddressPolicy AddressPolicy = AZ::EBusAddressPolicy::Single; //!< One address.
     };
 
     //! Bus for ThingSystemRequests, used by scripts.

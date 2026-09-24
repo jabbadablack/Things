@@ -86,13 +86,13 @@ namespace Things
         struct Layer
         {
             AZStd::unique_ptr<rapidjson::Document> m_json; //!< The definition.
-            AZStd::string m_source;     //!< The file it came from.
+            AZStd::string m_source; //!< The file it came from.
         };
 
         //! Removes reserved keys that only matter while resolving.
         static void StripReserved(rapidjson::Value& blueprint);
 
-        AZStd::unordered_map<AZStd::string, AZStd::vector<Layer>> m_raw;  //!< Definition layers by name, in load order.
+        AZStd::unordered_map<AZStd::string, AZStd::vector<Layer>> m_raw; //!< Definition layers by name, in load order.
         AZStd::unordered_map<AZStd::string, AZStd::unique_ptr<rapidjson::Document>> m_resolved; //!< Memoized resolved blueprints by name.
         AZStd::vector<AZStd::string> m_resolving; //!< Names being resolved, outermost first, to detect inheritance cycles.
     };

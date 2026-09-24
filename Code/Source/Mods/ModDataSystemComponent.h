@@ -52,7 +52,7 @@ namespace Things
         //! Rebuilds m_roots from m_config and tells listeners.
         void BuildRoots();
 
-        ModDataConfig m_config;          //!< Where data comes from.
+        ModDataConfig m_config; //!< Where data comes from.
         AZStd::vector<DataRoot> m_roots; //!< The game's data roots, then the enabled mods, in load order.
     };
 } // namespace Things

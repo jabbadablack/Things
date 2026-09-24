@@ -36,7 +36,11 @@ namespace Things
 
         //! Builds the owned children listed in the blueprint.
         void BuildChildren(
-            const rapidjson::Value& resolved, const AZStd::string& name, AZ::EntityId owner, AZ::u32 depth, AZStd::vector<AZ::EntityId>& built);
+            const rapidjson::Value& resolved,
+            const AZStd::string& name,
+            AZ::EntityId owner,
+            AZ::u32 depth,
+            AZStd::vector<AZ::EntityId>& built);
 
         BlueprintLibrary& m_library; //!< Where child blueprints come from.
     };

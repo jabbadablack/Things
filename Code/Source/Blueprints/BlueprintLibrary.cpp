@@ -50,7 +50,8 @@ namespace Things
     {
         if (!root.IsObject())
         {
-            AZ_Warning("Things", false, "Blueprint file '%.*s' must hold an object of blueprints by name; it is skipped.", AZ_STRING_ARG(source));
+            AZ_Warning(
+                "Things", false, "Blueprint file '%.*s' must hold an object of blueprints by name; it is skipped.", AZ_STRING_ARG(source));
             return false;
         }
 
@@ -65,7 +66,8 @@ namespace Things
     {
         if (!layer.IsObject())
         {
-            AZ_Warning("Things", false, "Blueprint '%.*s' in '%.*s' is not an object; it is skipped.", AZ_STRING_ARG(name), AZ_STRING_ARG(source));
+            AZ_Warning(
+                "Things", false, "Blueprint '%.*s' in '%.*s' is not an object; it is skipped.", AZ_STRING_ARG(name), AZ_STRING_ARG(source));
             return;
         }
 
@@ -82,8 +84,11 @@ namespace Things
             else if (!load->value.IsString() || ToView(load->value) != "Merge")
             {
                 AZ_Warning(
-                    "Things", false, "Blueprint '%.*s' in '%.*s': \"Load\" must be \"Merge\" or \"Replace\"; it merges.",
-                    AZ_STRING_ARG(name), AZ_STRING_ARG(source));
+                    "Things",
+                    false,
+                    "Blueprint '%.*s' in '%.*s': \"Load\" must be \"Merge\" or \"Replace\"; it merges.",
+                    AZ_STRING_ARG(name),
+                    AZ_STRING_ARG(source));
             }
         }
 
@@ -139,14 +144,26 @@ namespace Things
                     {
                         cycle += step + " -> ";
                     }
-                    AZ_Warning("Things", false, "Blueprint inheritance cycle %s%s; base '%s' of '%s' is skipped.", cycle.c_str(), base.c_str(), base.c_str(), key.c_str());
+                    AZ_Warning(
+                        "Things",
+                        false,
+                        "Blueprint inheritance cycle %s%s; base '%s' of '%s' is skipped.",
+                        cycle.c_str(),
+                        base.c_str(),
+                        base.c_str(),
+                        key.c_str());
                     continue;
                 }
 
                 const rapidjson::Value* resolvedBase = Resolve(base);
                 if (!resolvedBase)
                 {
-                    AZ_Warning("Things", false, "Blueprint '%s' inherits from '%s', which does not exist; the base is skipped.", key.c_str(), base.c_str());
+                    AZ_Warning(
+                        "Things",
+                        false,
+                        "Blueprint '%s' inherits from '%s', which does not exist; the base is skipped.",
+                        key.c_str(),
+                        base.c_str());
                     continue;
                 }
                 ApplyLayer(*result, result->GetAllocator(), *resolvedBase, name);
@@ -240,9 +257,13 @@ namespace Things
                 const AZStd::string_view oldType = GetPartType(below->value);
                 const bool typeChanges = !newType.empty() && newType != oldType;
                 AZ_Warning(
-                    "Things", replaceRequested || !typeChanges,
+                    "Things",
+                    replaceRequested || !typeChanges,
                     "Blueprint '%.*s': part '%s' changes type from '%.*s' to '%.*s'; the part is replaced, not merged.",
-                    AZ_STRING_ARG(name), part.name.GetString(), AZ_STRING_ARG(oldType), AZ_STRING_ARG(newType));
+                    AZ_STRING_ARG(name),
+                    part.name.GetString(),
+                    AZ_STRING_ARG(oldType),
+                    AZ_STRING_ARG(newType));
 
                 if (replaceRequested || typeChanges)
                 {

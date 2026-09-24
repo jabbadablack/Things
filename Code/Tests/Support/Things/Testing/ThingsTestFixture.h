@@ -52,8 +52,8 @@ namespace Things::Testing
         //! Whether any counted warning contains the text.
         bool HasWarningContaining(AZStd::string_view text) const;
 
-        int m_warnings = 0;                      //!< Warnings seen.
-        int m_errors = 0;                        //!< Errors seen.
+        int m_warnings = 0; //!< Warnings seen.
+        int m_errors = 0; //!< Errors seen.
         AZStd::vector<AZStd::string> m_messages; //!< Warning texts, in order.
     };
 

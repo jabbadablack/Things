@@ -5,9 +5,9 @@
 #include <AzCore/Serialization/Json/JsonUtils.h>
 #include <AzCore/Serialization/SerializeContext.h>
 #include <AzCore/Settings/SettingsRegistry.h>
+#include <AzCore/StringFunc/StringFunc.h>
 #include <AzCore/std/algorithm.h>
 #include <AzCore/std/sort.h>
-#include <AzCore/StringFunc/StringFunc.h>
 #include <Things/TypedJson.h>
 
 namespace Things
@@ -23,7 +23,8 @@ namespace Things
         {
             AZ::IO::FileIOBase* fileIO = AZ::IO::FileIOBase::GetInstance();
             fileIO->FindFiles(
-                folder.c_str(), "*",
+                folder.c_str(),
+                "*",
                 [&fn](const char* path)
                 {
                     fn(AZ::IO::PathView(path).Filename());
@@ -33,10 +34,7 @@ namespace Things
 
         //! Adds every file with the extension below folder, recursively, with paths relative to the root.
         void CollectFiles(
-            const DataRoot& root,
-            const AZ::IO::Path& relativeFolder,
-            AZStd::string_view extension,
-            AZStd::vector<DataFile>& out)
+            const DataRoot& root, const AZ::IO::Path& relativeFolder, AZStd::string_view extension, AZStd::vector<DataFile>& out)
         {
             AZ::IO::FileIOBase* fileIO = AZ::IO::FileIOBase::GetInstance();
             ForEachEntry(
@@ -151,7 +149,8 @@ namespace Things
             const size_t first = files.size();
             CollectFiles(root, AZ::IO::Path(folder), extension, files);
             AZStd::sort(
-                files.begin() + first, files.end(),
+                files.begin() + first,
+                files.end(),
                 [](const DataFile& lhs, const DataFile& rhs)
                 {
                     return lhs.m_relativePath < rhs.m_relativePath;
@@ -233,7 +232,8 @@ namespace Things
                 return static_cast<size_t>(ordered - m_config.m_order.begin());
             };
             AZStd::sort(
-                mods.begin(), mods.end(),
+                mods.begin(),
+                mods.end(),
                 [&rank](const AZStd::string& lhs, const AZStd::string& rhs)
                 {
                     const size_t lhsRank = rank(lhs);

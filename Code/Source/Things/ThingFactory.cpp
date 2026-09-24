@@ -113,7 +113,8 @@ namespace Things
     {
     }
 
-    AZ::EntityId ThingFactory::Build(const rapidjson::Value& resolved, const AZStd::string& name, const AZ::Transform& transform, AZ::EntityId owner)
+    AZ::EntityId ThingFactory::Build(
+        const rapidjson::Value& resolved, const AZStd::string& name, const AZ::Transform& transform, AZ::EntityId owner)
     {
         AZStd::vector<AZ::EntityId> built;
         const AZ::EntityId thing = BuildAt(resolved, name, transform, owner, 0, built);
@@ -156,9 +157,14 @@ namespace Things
         if (!dependencies.IsSuccess())
         {
             AZ_Warning(
-                "Things", false, "Thing '%s' can't be built because its parts don't fit together: %s %s", name.c_str(),
-                dependencies.GetError().m_message.c_str(), dependencies.GetError().m_extendedMessage.c_str());
-            AzFramework::GameEntityContextRequestBus::Broadcast(&AzFramework::GameEntityContextRequests::DestroyGameEntity, entity->GetId());
+                "Things",
+                false,
+                "Thing '%s' can't be built because its parts don't fit together: %s %s",
+                name.c_str(),
+                dependencies.GetError().m_message.c_str(),
+                dependencies.GetError().m_extendedMessage.c_str());
+            AzFramework::GameEntityContextRequestBus::Broadcast(
+                &AzFramework::GameEntityContextRequests::DestroyGameEntity, entity->GetId());
             return AZ::EntityId();
         }
 
@@ -189,14 +195,20 @@ namespace Things
         }
         if (depth >= MaxChildDepth && children->value.MemberCount() > 0)
         {
-            AZ_Warning("Things", false, "Thing '%s': children nest deeper than %u; its children are not built. Does a blueprint own itself?", name.c_str(), MaxChildDepth);
+            AZ_Warning(
+                "Things",
+                false,
+                "Thing '%s': children nest deeper than %u; its children are not built. Does a blueprint own itself?",
+                name.c_str(),
+                MaxChildDepth);
             return;
         }
 
         for (const auto& child : children->value.GetObject())
         {
             const char* childId = child.name.GetString();
-            const auto blueprint = child.value.IsObject() ? child.value.FindMember(BlueprintLibrary::BlueprintKey) : child.value.MemberEnd();
+            const auto blueprint =
+                child.value.IsObject() ? child.value.FindMember(BlueprintLibrary::BlueprintKey) : child.value.MemberEnd();
             if (!child.value.IsObject() || blueprint == child.value.MemberEnd() || !blueprint->value.IsString())
             {
                 AZ_Warning("Things", false, "Blueprint '%s': child '%s' needs a \"Blueprint\" name.", name.c_str(), childId);
@@ -207,7 +219,13 @@ namespace Things
             const rapidjson::Value* childResolved = m_library.Resolve(childBlueprint);
             if (!childResolved)
             {
-                AZ_Warning("Things", false, "Thing '%s': child '%s' uses blueprint '%s', which does not exist.", name.c_str(), childId, childBlueprint.c_str());
+                AZ_Warning(
+                    "Things",
+                    false,
+                    "Thing '%s': child '%s' uses blueprint '%s', which does not exist.",
+                    name.c_str(),
+                    childId,
+                    childBlueprint.c_str());
                 continue;
             }
 

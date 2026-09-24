@@ -67,10 +67,10 @@ namespace Things
         void Deactivate() override;
 
     private:
-        AZStd::string m_blueprint;                                //!< Blueprint name, or layers joined with '+'.
-        AZ::EntityId m_owner;                                     //!< The owning Thing, or invalid when top-level.
-        AZStd::vector<AZ::EntityId> m_owned;                      //!< Owned Things, in order.
-        AZStd::vector<AZStd::string> m_tags;                      //!< Tags from the blueprint, sorted.
+        AZStd::string m_blueprint; //!< Blueprint name, or layers joined with '+'.
+        AZ::EntityId m_owner; //!< The owning Thing, or invalid when top-level.
+        AZStd::vector<AZ::EntityId> m_owned; //!< Owned Things, in order.
+        AZStd::vector<AZStd::string> m_tags; //!< Tags from the blueprint, sorted.
         AZStd::unordered_map<AZStd::string, AZ::ComponentId> m_parts; //!< Blueprint part keys to components.
     };
 } // namespace Things

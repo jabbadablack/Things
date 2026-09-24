@@ -27,7 +27,12 @@ namespace Things
         ThingComponent* owner = Find(thing.m_owner);
         if (!owner)
         {
-            AZ_Warning("Things", false, "Thing '%s' is owned by %s, which is not a Thing; it becomes top-level.", thing.m_blueprint.c_str(), thing.m_owner.ToString().c_str());
+            AZ_Warning(
+                "Things",
+                false,
+                "Thing '%s' is owned by %s, which is not a Thing; it becomes top-level.",
+                thing.m_blueprint.c_str(),
+                thing.m_owner.ToString().c_str());
             thing.m_owner.SetInvalid();
             return;
         }
@@ -66,13 +71,30 @@ namespace Things
             ownerComponent = Find(newOwner);
             if (!ownerComponent)
             {
-                AZ_Warning("Things", false, "'%s' can't be given to %s, which is not a Thing.", component->m_blueprint.c_str(), newOwner.ToString().c_str());
+                AZ_Warning(
+                    "Things",
+                    false,
+                    "'%s' can't be given to %s, which is not a Thing.",
+                    component->m_blueprint.c_str(),
+                    newOwner.ToString().c_str());
                 return false;
             }
 
-            if (newOwner == thing || FindAncestor(newOwner, [thing](AZ::EntityId ancestor) { return ancestor == thing; }).IsValid())
+            if (newOwner == thing ||
+                FindAncestor(
+                    newOwner,
+                    [thing](AZ::EntityId ancestor)
+                    {
+                        return ancestor == thing;
+                    })
+                    .IsValid())
             {
-                AZ_Warning("Things", false, "'%s' can't be given to '%s', which it owns.", component->m_blueprint.c_str(), ownerComponent->m_blueprint.c_str());
+                AZ_Warning(
+                    "Things",
+                    false,
+                    "'%s' can't be given to '%s', which it owns.",
+                    component->m_blueprint.c_str(),
+                    ownerComponent->m_blueprint.c_str());
                 return false;
             }
         }

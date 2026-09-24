@@ -79,9 +79,9 @@ namespace Things
         //! Reads the blueprint files unless they are current.
         void EnsureLoaded();
 
-        BlueprintLibrary m_library;         //!< The blueprints.
-        ThingRegistry m_registry;           //!< The active Things.
+        BlueprintLibrary m_library; //!< The blueprints.
+        ThingRegistry m_registry; //!< The active Things.
         ThingFactory m_factory{ m_library }; //!< Builds Things from m_library.
-        bool m_loaded = false;              //!< Whether m_library holds the current files.
+        bool m_loaded = false; //!< Whether m_library holds the current files.
     };
 } // namespace Things
