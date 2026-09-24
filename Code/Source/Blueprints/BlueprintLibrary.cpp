@@ -115,7 +115,7 @@ namespace Things
         rapidjson::Document own(rapidjson::kObjectType);
         for (const Layer& layer : raw->second)
         {
-            ApplyLayer(own, own.GetAllocator(), *layer.m_json, name);
+            ApplyLayer(own, own.GetAllocator(), *layer.m_json, name, false);
         }
 
         auto result = AZStd::make_unique<rapidjson::Document>(rapidjson::kObjectType);
@@ -166,7 +166,7 @@ namespace Things
                         base.c_str());
                     continue;
                 }
-                ApplyLayer(*result, result->GetAllocator(), *resolvedBase, name);
+                ApplyLayer(*result, result->GetAllocator(), *resolvedBase, name, false);
             }
         }
 
@@ -195,7 +195,7 @@ namespace Things
                 AZ_Warning("Things", false, "Composition layer '%s' does not exist; it is skipped.", name.c_str());
                 continue;
             }
-            ApplyLayer(out, out.GetAllocator(), *resolved, name);
+            ApplyLayer(out, out.GetAllocator(), *resolved, name, false);
             anyFound = true;
         }
         return anyFound;
@@ -237,7 +237,11 @@ namespace Things
     }
 
     void BlueprintLibrary::ApplyLayer(
-        rapidjson::Value& target, rapidjson::Document::AllocatorType& allocator, const rapidjson::Value& layer, AZStd::string_view name)
+        rapidjson::Value& target,
+        rapidjson::Document::AllocatorType& allocator,
+        const rapidjson::Value& layer,
+        AZStd::string_view name,
+        bool warnOnTypeChange)
     {
         const rapidjson::Value* layerParts = FindObject(layer, PartsKey);
         rapidjson::Value* targetParts = FindObject(target, PartsKey);
@@ -258,7 +262,7 @@ namespace Things
                 const bool typeChanges = !newType.empty() && newType != oldType;
                 AZ_Warning(
                     "Things",
-                    replaceRequested || !typeChanges,
+                    !warnOnTypeChange || replaceRequested || !typeChanges,
                     "Blueprint '%.*s': part '%s' changes type from '%.*s' to '%.*s'; the part is replaced, not merged.",
                     AZ_STRING_ARG(name),
                     part.name.GetString(),

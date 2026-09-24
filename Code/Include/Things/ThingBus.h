@@ -2,6 +2,7 @@
 
 #include <AzCore/Component/ComponentBus.h>
 #include <AzCore/RTTI/RTTI.h>
+#include <AzCore/std/containers/vector.h>
 #include <Things/ThingsTypeIds.h>
 
 namespace Things
@@ -43,4 +44,21 @@ namespace Things
 
     //! Bus for ThingNotifications.
     using ThingNotificationBus = AZ::EBus<ThingNotifications>;
+
+    //! A Thing's visible body, addressed by the Thing.
+    class ThingBodyRequests : public AZ::ComponentBus
+    {
+    public:
+        //! Destroys the handler.
+        virtual ~ThingBodyRequests() = default;
+
+        //! One body per Thing.
+        static constexpr AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Single;
+
+        //! The entities of the spawned body; empty until it has spawned.
+        virtual AZStd::vector<AZ::EntityId> GetBodyEntities() const = 0;
+    };
+
+    //! Bus for ThingBodyRequests.
+    using ThingBodyRequestBus = AZ::EBus<ThingBodyRequests>;
 } // namespace Things

@@ -20,16 +20,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
               "Children": {"Fists": {"Blueprint": "Weapon_Fists", "Parts": {"Melee": {"Damage": "thr"}}}}}}
   ```
   - All layering (mods, inheritance, recipes, child overrides) is JSON Merge Patch (`BlueprintLibrary::ApplyLayer`): objects merge, `null` removes, anything else replaces. So anything a mod may patch must be an object keyed by id; arrays such as `Inherits` are replaced whole.
-  - A part whose `"$type"` changes, or that says `"$replace": true`, replaces the part below instead of merging.
+  - A part whose `"$type"` changes, or that says `"$replace": true`, replaces the part below instead of merging. A type change without `"$replace"` warns only within one blueprint's own layers; layering resolved bases or recipe layers replaces silently.
+  - Part type names are global across gems: pick distinctive class names (`ActorComponent` collides with EMotionFX's).
   - `"Load": "Replace"` discards the earlier layers of that name.
   - Raw layers are kept per name, so a mod's `null` removes a part the blueprint only inherits.
   - The key `"Id"` is reserved for the component id and is stripped from parts with a warning.
 - **Data and mods:** `ModDataSystemComponent` reads the game's data roots, then every mod folder under the mod roots (alphabetical, or ordered by the Settings Registry). Configure it at `/Things/ModData` (`DataRoots` default `["@products@"]`, `ModRoots` default `["@user@/Mods"]`, `Order`, `Disabled`). Blueprints are the `.json` files under `/Things/BlueprintFolder` (default `blueprints`) of every root. `ModDataRequests::LoadLayered` gives any game data file (rules tables, recipes) the same mod layering. Folder and file names are lower-case, because Asset Processor products are.
-- **Body:** `ThingBodyComponent` spawns a prefab (spawnable, by AssetId) as a child of the Thing's transform. Game logic never depends on it.
+- **Body:** `ThingBodyComponent` spawns a prefab (spawnable, by AssetId) as a child of the Thing's transform; `ThingBodyRequestBus::GetBodyEntities` lists the spawned entities (e.g. to hide them). Game logic never depends on it. Without a spawnable system (unit tests) it warns once and stays invisible.
 
 ## Layout
 
-- `Code/Include/Things/`: the public API (`Things.API`). `ThingSystemBus.h` (spawn, destroy, ownership, blueprints), `ThingBus.h` (per-Thing notifications), `ModDataBus.h`, `TypedJson.h`, `ThingsTypeIds.h`.
+- `Code/Include/Things/`: the public API (`Things.API`). `ThingSystemBus.h` (spawn, destroy, ownership, blueprints), `ThingBus.h` (per-Thing notifications and body requests), `ModDataBus.h`, `TypedJson.h`, `ThingsTypeIds.h`.
 - `Code/Source/`: `Blueprints/BlueprintLibrary`, `Mods/ModDataSystemComponent`, `Things/` (`ThingComponent`, `ThingRegistry`, `ThingFactory`, `ThingBodyComponent`, `ThingSystemComponent` with the script reflection and console commands), `ThingsModule.cpp`.
 - `Code/Tests/`: AzTest suites, test parts (`TestParts.h`) and `Data/` (a game root and three mods).
 - `Code/Tests/Support/Things/Testing/`: `ThingsTestFixture`, `ThingsTestApplication` and `TraceCounter`, built as `Things.TestSupport` so game test targets can reuse them.

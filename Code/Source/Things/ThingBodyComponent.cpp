@@ -30,14 +30,14 @@ namespace Things
         incompatible.push_back(AZ_CRC_CE("ThingBodyService"));
     }
 
-    const AZStd::vector<AZ::EntityId>& ThingBodyComponent::GetBodyEntities() const
+    AZStd::vector<AZ::EntityId> ThingBodyComponent::GetBodyEntities() const
     {
-        static const AZStd::vector<AZ::EntityId> none;
-        return m_bodyEntities ? *m_bodyEntities : none;
+        return m_bodyEntities ? *m_bodyEntities : AZStd::vector<AZ::EntityId>();
     }
 
     void ThingBodyComponent::Activate()
     {
+        ThingBodyRequestBus::Handler::BusConnect(GetEntityId());
         if (!m_prefab.GetId().IsValid())
         {
             AZ_Warning("Things", false, "Thing %s has a body part without a prefab; it stays invisible.", GetEntityId().ToString().c_str());
@@ -45,9 +45,11 @@ namespace Things
         }
 
         auto* spawner = AzFramework::SpawnableEntitiesInterface::Get();
-        AZ_Assert(spawner, "ThingBodyComponent needs the spawnable system.");
         if (!spawner)
         {
+            static bool warned = false;
+            AZ_Warning("Things", warned, "There is no spawnable system, so Thing bodies stay invisible (expected in unit tests).");
+            warned = true;
             return;
         }
 
@@ -88,6 +90,7 @@ namespace Things
 
     void ThingBodyComponent::Deactivate()
     {
+        ThingBodyRequestBus::Handler::BusDisconnect();
         m_ticket = AzFramework::EntitySpawnTicket();
         m_bodyEntities.reset();
     }

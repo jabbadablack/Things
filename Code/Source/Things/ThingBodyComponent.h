@@ -6,6 +6,7 @@
 #include <AzCore/std/smart_ptr/shared_ptr.h>
 #include <AzFramework/Spawnable/Spawnable.h>
 #include <AzFramework/Spawnable/SpawnableEntitiesInterface.h>
+#include <Things/ThingBus.h>
 #include <Things/ThingsTypeIds.h>
 
 namespace Things
@@ -13,7 +14,9 @@ namespace Things
     //! The part that gives a Thing a visible body: a prefab spawned as a child of the Thing's entity.
     //!
     //! Game logic never depends on the body; it spawns asynchronously and goes away with the Thing.
-    class ThingBodyComponent : public AZ::Component
+    class ThingBodyComponent
+        : public AZ::Component
+        , public ThingBodyRequestBus::Handler
     {
     public:
         AZ_COMPONENT(ThingBodyComponent, ThingBodyComponentTypeId);
@@ -31,7 +34,7 @@ namespace Things
         static void GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible);
 
         //! The entities of the spawned body, once it has spawned; empty before that.
-        const AZStd::vector<AZ::EntityId>& GetBodyEntities() const;
+        AZStd::vector<AZ::EntityId> GetBodyEntities() const override;
 
     protected:
         //! Loads the prefab and spawns it under the Thing.

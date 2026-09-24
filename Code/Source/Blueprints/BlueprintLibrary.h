@@ -75,11 +75,13 @@ namespace Things
 
         //! Applies a layer onto target with JSON Merge Patch, for the blueprint called name.
         //! A part whose "$type" differs from the one below, or that has "$replace": true, replaces it instead of merging.
+        //! warnOnTypeChange warns about a type change without "$replace", which is likely a mistake in an authored layer.
         static void ApplyLayer(
             rapidjson::Value& target,
             rapidjson::Document::AllocatorType& allocator,
             const rapidjson::Value& layer,
-            AZStd::string_view name);
+            AZStd::string_view name,
+            bool warnOnTypeChange = true);
 
     private:
         //! One definition of a name, as read from a file.
