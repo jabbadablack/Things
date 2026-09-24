@@ -1,0 +1,31 @@
+{
+    "gem_name": "Things",
+    "version": "1.0.0",
+    "display_name": "Things",
+    "license": "",
+    "license_url": "",
+    "origin": "P-Rose",
+    "origin_url": "",
+    "type": "Code",
+    "summary": "Data-driven moddable Thing, Part and Blueprint object model built from layered JSON blueprints.",
+    "canonical_tags": [
+        "Gem"
+    ],
+    "user_tags": [
+        "Things",
+        "Gameplay",
+        "Framework"
+    ],
+    "platforms": [
+        "Windows",
+        "Linux",
+        "MacOS"
+    ],
+    "icon_path": "preview.png",
+    "requirements": "",
+    "documentation_url": "",
+    "dependencies": [],
+    "repo_uri": "",
+    "compatible_engines": [],
+    "engine_api_dependencies": []
+}

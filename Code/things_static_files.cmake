@@ -1,0 +1,16 @@
+set(FILES
+    Source/Blueprints/BlueprintLibrary.cpp
+    Source/Blueprints/BlueprintLibrary.h
+    Source/Mods/ModDataSystemComponent.cpp
+    Source/Mods/ModDataSystemComponent.h
+    Source/Things/ThingBodyComponent.cpp
+    Source/Things/ThingBodyComponent.h
+    Source/Things/ThingComponent.cpp
+    Source/Things/ThingComponent.h
+    Source/Things/ThingFactory.cpp
+    Source/Things/ThingFactory.h
+    Source/Things/ThingRegistry.cpp
+    Source/Things/ThingRegistry.h
+    Source/Things/ThingSystemComponent.cpp
+    Source/Things/ThingSystemComponent.h
+)

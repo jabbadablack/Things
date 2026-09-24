@@ -1,0 +1,1 @@
+{"Crate": {"Tags": {"Container": true}, "Parts": {"Weight": {"$type": "TestValuePart", "Value": 20, "Text": "game"}}}}
