@@ -251,6 +251,37 @@ namespace Things::Testing
         EXPECT_TRUE(FindPart<ThingBodyComponent>(ghost)->GetBodyEntities().empty());
     }
 
+    TEST_F(ThingSpawnTests, BodyIsInTheWorldOnlyWhileTheThingIsTopLevel)
+    {
+        AddBlueprints(R"({
+            "Lamp":   {"Parts": {"Transform": {"$type": "TransformComponent"}, "Body": {"$type": "ThingBodyComponent"}}},
+            "Statue": {"Parts": {"Transform": {"$type": "TransformComponent"},
+                                 "Body": {"$type": "ThingBodyComponent", "ShowWhenOwned": true}}},
+            "Bearer": {"Children": {"Lamp": {"Blueprint": "Lamp"}}}
+        })");
+        TraceCounter trace;
+        const auto isInWorld = [](AZ::EntityId thing)
+        {
+            bool inWorld = false;
+            ThingBodyRequestBus::EventResult(inWorld, thing, &ThingBodyRequests::IsInWorld);
+            return inWorld;
+        };
+
+        const AZ::EntityId bearer = Things().Spawn("Bearer", AZ::Transform::CreateIdentity());
+        ASSERT_EQ(Things().GetOwned(bearer).size(), 1u);
+        const AZ::EntityId lamp = Things().GetOwned(bearer).front();
+        EXPECT_FALSE(isInWorld(lamp));
+
+        ASSERT_TRUE(Things().Transfer(lamp, AZ::EntityId()));
+        EXPECT_TRUE(isInWorld(lamp));
+        ASSERT_TRUE(Things().Transfer(lamp, bearer));
+        EXPECT_FALSE(isInWorld(lamp));
+
+        const AZ::EntityId statue = Things().Spawn("Statue", AZ::Transform::CreateIdentity());
+        ASSERT_TRUE(Things().Transfer(statue, bearer));
+        EXPECT_TRUE(isInWorld(statue));
+    }
+
     TEST_F(ThingSpawnTests, ThreeHundredThingsWithTenChildrenEachSpawnQuickly)
     {
         AddBlueprints(R"({"Pack": {"Parts": {"Weight": {"$type": "TestValuePart", "Value": 1}},

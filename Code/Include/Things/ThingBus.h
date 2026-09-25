@@ -55,8 +55,11 @@ namespace Things
         //! One body per Thing.
         static constexpr AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Single;
 
-        //! The entities of the spawned body; empty until it has spawned.
+        //! The entities of the spawned body; empty until it has spawned and while it is out of the world.
         virtual AZStd::vector<AZ::EntityId> GetBodyEntities() const = 0;
+
+        //! Whether the body is in the world: while the Thing is top-level, or always when it shows while owned.
+        virtual bool IsInWorld() const = 0;
     };
 
     //! Bus for ThingBodyRequests.

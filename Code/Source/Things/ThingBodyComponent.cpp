@@ -4,6 +4,7 @@
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Serialization/SerializeContext.h>
 #include <AzFramework/Components/TransformComponent.h>
+#include <Things/ThingSystemBus.h>
 
 namespace Things
 {
@@ -11,7 +12,10 @@ namespace Things
     {
         if (auto* serializeContext = azrtti_cast<AZ::SerializeContext*>(context))
         {
-            serializeContext->Class<ThingBodyComponent, AZ::Component>()->Version(0)->Field("Prefab", &ThingBodyComponent::m_prefab);
+            serializeContext->Class<ThingBodyComponent, AZ::Component>()
+                ->Version(0)
+                ->Field("Prefab", &ThingBodyComponent::m_prefab)
+                ->Field("ShowWhenOwned", &ThingBodyComponent::m_showWhenOwned);
         }
     }
 
@@ -35,9 +39,54 @@ namespace Things
         return m_bodyEntities ? *m_bodyEntities : AZStd::vector<AZ::EntityId>();
     }
 
+    bool ThingBodyComponent::IsInWorld() const
+    {
+        return m_inWorld;
+    }
+
+    void ThingBodyComponent::OnOwnerChanged([[maybe_unused]] AZ::EntityId oldOwner, [[maybe_unused]] AZ::EntityId newOwner)
+    {
+        UpdateBody();
+    }
+
     void ThingBodyComponent::Activate()
     {
+        m_inWorld = false;
         ThingBodyRequestBus::Handler::BusConnect(GetEntityId());
+        ThingNotificationBus::Handler::BusConnect(GetEntityId());
+        UpdateBody();
+    }
+
+    void ThingBodyComponent::Deactivate()
+    {
+        ThingNotificationBus::Handler::BusDisconnect();
+        ThingBodyRequestBus::Handler::BusDisconnect();
+        DespawnBody();
+        m_inWorld = false;
+    }
+
+    void ThingBodyComponent::UpdateBody()
+    {
+        const ThingSystemRequests* things = ThingSystemInterface::Get();
+        const bool owned = things && things->GetOwner(GetEntityId()).IsValid();
+        const bool wanted = m_showWhenOwned || !owned;
+        if (wanted == m_inWorld)
+        {
+            return;
+        }
+        m_inWorld = wanted;
+        if (wanted)
+        {
+            SpawnBody();
+        }
+        else
+        {
+            DespawnBody();
+        }
+    }
+
+    void ThingBodyComponent::SpawnBody()
+    {
         if (!m_prefab.GetId().IsValid())
         {
             AZ_Warning("Things", false, "Thing %s has a body part without a prefab; it stays invisible.", GetEntityId().ToString().c_str());
@@ -88,9 +137,8 @@ namespace Things
         spawner->SpawnAllEntities(m_ticket, AZStd::move(args));
     }
 
-    void ThingBodyComponent::Deactivate()
+    void ThingBodyComponent::DespawnBody()
     {
-        ThingBodyRequestBus::Handler::BusDisconnect();
         m_ticket = AzFramework::EntitySpawnTicket();
         m_bodyEntities.reset();
     }
