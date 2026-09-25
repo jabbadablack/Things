@@ -75,4 +75,16 @@ namespace Things::Testing
         EXPECT_EQ(part->m_value, 3);
         EXPECT_TRUE(trace.HasWarningContaining("Crate part 'Weight'"));
     }
+
+    TEST_F(TypedJsonTests, FindPartOfTypeFindsTheTypedPart)
+    {
+        const rapidjson::Document blueprint = Parse(
+            R"({"Parts": {"Look": {"$type": "TestOtherPart", "Other": 1}, "Stats": {"$type": "TestValuePart", "Value": 7}, "Off": null}})");
+        const rapidjson::Value* part = FindPartOfType(blueprint, "TestValuePart");
+        ASSERT_NE(part, nullptr);
+        EXPECT_EQ((*part)["Value"].GetInt(), 7);
+        EXPECT_EQ(FindPartOfType(blueprint, "NoSuchPart"), nullptr);
+        EXPECT_EQ(FindPartOfType(Parse(R"({"Parts": 3})"), "TestValuePart"), nullptr);
+        EXPECT_EQ(FindPartOfType(Parse(R"({})"), "TestValuePart"), nullptr);
+    }
 } // namespace Things::Testing

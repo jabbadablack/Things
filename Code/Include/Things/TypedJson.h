@@ -38,6 +38,35 @@ namespace Things
         return result.GetProcessing() != AZ::JsonSerializationResult::Processing::Halted;
     }
 
+    //! The first part of a resolved blueprint whose "$type" is the given class name, or nullptr.
+    //! Lets a game read data parts (such as materials or terrain) without spawning the blueprint.
+    inline const rapidjson::Value* FindPartOfType(const rapidjson::Value& blueprint, AZStd::string_view type)
+    {
+        if (!blueprint.IsObject())
+        {
+            return nullptr;
+        }
+        const auto parts = blueprint.FindMember("Parts");
+        if (parts == blueprint.MemberEnd() || !parts->value.IsObject())
+        {
+            return nullptr;
+        }
+        for (const auto& part : parts->value.GetObject())
+        {
+            if (!part.value.IsObject())
+            {
+                continue;
+            }
+            const auto typeField = part.value.FindMember(AZ::JsonSerialization::TypeIdFieldIdentifier);
+            if (typeField != part.value.MemberEnd() && typeField->value.IsString() &&
+                AZStd::string_view(typeField->value.GetString(), typeField->value.GetStringLength()) == type)
+            {
+                return &part.value;
+            }
+        }
+        return nullptr;
+    }
+
     //! Creates an object of the class named by the value's "$type" (a class name or TypeId) and loads the value into it.
     //! The class must derive from Base. Returns nullptr, with a warning naming the context, when the type is missing,
     //! unknown or not a Base. The caller owns the result.
