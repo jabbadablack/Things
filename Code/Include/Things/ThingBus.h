@@ -3,6 +3,7 @@
 #include <AzCore/Component/ComponentBus.h>
 #include <AzCore/RTTI/RTTI.h>
 #include <AzCore/std/containers/vector.h>
+#include <AzCore/std/string/string.h>
 #include <Things/ThingsTypeIds.h>
 
 namespace Things
@@ -55,16 +56,57 @@ namespace Things
         //! One body per Thing.
         static constexpr AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Single;
 
-        //! The entities of the spawned body; empty until it has spawned and while it is out of the world.
+        //! The entities of the body's current look; empty until it has spawned.
         virtual AZStd::vector<AZ::EntityId> GetBodyEntities() const = 0;
 
-        //! Whether the body is in the world: while the Thing is top-level, or always when it shows while owned.
+        //! Whether the current look belongs in the world: the default look while the Thing is top-level, a named look
+        //! always (on its owner's socket while owned). Whether it shows also depends on SetShown.
         virtual bool IsInWorld() const = 0;
 
-        //! Whether the body's prefab was asked to spawn and hasn't finished, e.g. for a loading screen to wait on.
+        //! Whether a look's prefab was asked to spawn and hasn't finished, e.g. for a loading screen to wait on.
         virtual bool IsSpawning() const = 0;
+
+        //! Switches to a named look (e.g. "Held" for a torch in hand), or back to the default one with an empty name.
+        virtual void SetLook(const AZStd::string& look) = 0;
+
+        //! The current look's name; empty for the default one.
+        virtual const AZStd::string& GetLook() const = 0;
+
+        //! Shows or hides the body, e.g. while it is out of sight; hidden bodies' entities are deactivated, and so are
+        //! the looks of everything the Thing owns.
+        virtual void SetShown(bool shown) = 0;
+
+        //! Whether the body shows: set shown, in the world, and, while owned, its owner's body shows too.
+        virtual bool IsShown() const = 0;
+
+        //! Shows or hides the entities of a part of the body by entity name (e.g. flames on a creature), in every look.
+        virtual void SetPartShown(const AZStd::string& part, bool shown) = 0;
+
+        //! The entity of the current look with a name (e.g. a hand socket), or an invalid id.
+        virtual AZ::EntityId FindBodyEntity(const AZStd::string& name) const = 0;
     };
 
     //! Bus for ThingBodyRequests.
     using ThingBodyRequestBus = AZ::EBus<ThingBodyRequests>;
+
+    //! Events about a Thing's body, addressed by the Thing, e.g. for the looks of what it owns to follow it.
+    class ThingBodyNotifications : public AZ::ComponentBus
+    {
+    public:
+        //! Destroys the handler.
+        virtual ~ThingBodyNotifications() = default;
+
+        //! A look of the body finished spawning.
+        virtual void OnBodySpawned()
+        {
+        }
+
+        //! The body started or stopped showing.
+        virtual void OnShownChanged([[maybe_unused]] bool shown)
+        {
+        }
+    };
+
+    //! Bus for ThingBodyNotifications.
+    using ThingBodyNotificationBus = AZ::EBus<ThingBodyNotifications>;
 } // namespace Things

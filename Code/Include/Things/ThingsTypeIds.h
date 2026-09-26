@@ -13,6 +13,8 @@ namespace Things
     inline constexpr const char* ThingComponentTypeId = "{0551773B-79AD-4A91-B15A-6F04E9C9CBED}";
     //! TypeId of ThingBodyComponent, the part that spawns a Thing's visible body.
     inline constexpr const char* ThingBodyComponentTypeId = "{17E35AE0-9A68-4FF5-83DD-498E4C4CBF3F}";
+    //! TypeId of BodyLook, a named look of a Thing's body.
+    inline constexpr const char* BodyLookTypeId = "{0BAD88F5-0520-48CF-8075-C1009EF2DE75}";
 
     //! TypeId of the ThingSystemRequests interface.
     inline constexpr const char* ThingSystemRequestsTypeId = "{611CA4A9-BE85-4828-9025-2A6902E2F1C0}";

@@ -256,7 +256,7 @@ namespace Things::Testing
         AddBlueprints(R"({
             "Lamp":   {"Parts": {"Transform": {"$type": "TransformComponent"}, "Body": {"$type": "ThingBodyComponent"}}},
             "Statue": {"Parts": {"Transform": {"$type": "TransformComponent"},
-                                 "Body": {"$type": "ThingBodyComponent", "ShowWhenOwned": true}}},
+                                 "Body": {"$type": "ThingBodyComponent", "Looks": {"Carried": {"Socket": "Hand"}}}}},
             "Bearer": {"Children": {"Lamp": {"Blueprint": "Lamp"}}}
         })");
         TraceCounter trace;
@@ -279,7 +279,47 @@ namespace Things::Testing
 
         const AZ::EntityId statue = Things().Spawn("Statue", AZ::Transform::CreateIdentity());
         ASSERT_TRUE(Things().Transfer(statue, bearer));
-        EXPECT_TRUE(isInWorld(statue));
+        EXPECT_FALSE(isInWorld(statue)) << "the default look stays out of the world while owned";
+        ThingBodyRequestBus::Event(statue, &ThingBodyRequests::SetLook, AZStd::string("Carried"));
+        EXPECT_TRUE(isInWorld(statue)) << "a named look shows while owned, on its owner's socket";
+        AZStd::string look;
+        ThingBodyRequestBus::EventResult(look, statue, &ThingBodyRequests::GetLook);
+        EXPECT_EQ(look, "Carried");
+    }
+
+    TEST_F(ThingSpawnTests, BodiesShowOnlyWhenAskedAndWithTheirOwners)
+    {
+        AddBlueprints(R"({
+            "Torch":  {"Parts": {"Transform": {"$type": "TransformComponent"},
+                                 "Body": {"$type": "ThingBodyComponent", "Looks": {"Held": {"Socket": "Hand"}}}}},
+            "Bearer": {"Parts": {"Transform": {"$type": "TransformComponent"}, "Body": {"$type": "ThingBodyComponent"}},
+                       "Children": {"Torch": {"Blueprint": "Torch"}}}
+        })");
+        const auto isShown = [](AZ::EntityId thing)
+        {
+            bool shown = false;
+            ThingBodyRequestBus::EventResult(shown, thing, &ThingBodyRequests::IsShown);
+            return shown;
+        };
+        const AZ::EntityId bearer = Things().Spawn("Bearer", AZ::Transform::CreateIdentity());
+        ASSERT_EQ(Things().GetOwned(bearer).size(), 1u);
+        const AZ::EntityId torch = Things().GetOwned(bearer).front();
+        EXPECT_TRUE(isShown(bearer));
+        EXPECT_FALSE(isShown(torch)) << "carried in the pack";
+        ThingBodyRequestBus::Event(torch, &ThingBodyRequests::SetLook, AZStd::string("Held"));
+        EXPECT_TRUE(isShown(torch)) << "held in hand";
+        ThingBodyRequestBus::Event(bearer, &ThingBodyRequests::SetShown, false);
+        EXPECT_FALSE(isShown(bearer));
+        EXPECT_FALSE(isShown(torch)) << "a hidden bearer hides what it holds";
+        ThingBodyRequestBus::Event(bearer, &ThingBodyRequests::SetShown, true);
+        EXPECT_TRUE(isShown(torch));
+
+        TraceCounter trace;
+        ThingBodyRequestBus::Event(torch, &ThingBodyRequests::SetLook, AZStd::string("Worn"));
+        EXPECT_TRUE(trace.HasWarningContaining("has no look 'Worn'"));
+        AZStd::string look;
+        ThingBodyRequestBus::EventResult(look, torch, &ThingBodyRequests::GetLook);
+        EXPECT_EQ(look, "Held") << "an unknown look changes nothing";
     }
 
     TEST_F(ThingSpawnTests, ThreeHundredThingsWithTenChildrenEachSpawnQuickly)
