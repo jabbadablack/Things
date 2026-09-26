@@ -44,6 +44,11 @@ namespace Things
         return m_inWorld;
     }
 
+    bool ThingBodyComponent::IsSpawning() const
+    {
+        return m_inWorld && m_bodyEntities && m_bodyEntities->empty();
+    }
+
     void ThingBodyComponent::OnOwnerChanged([[maybe_unused]] AZ::EntityId oldOwner, [[maybe_unused]] AZ::EntityId newOwner)
     {
         UpdateBody();

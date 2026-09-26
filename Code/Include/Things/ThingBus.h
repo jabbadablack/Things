@@ -60,6 +60,9 @@ namespace Things
 
         //! Whether the body is in the world: while the Thing is top-level, or always when it shows while owned.
         virtual bool IsInWorld() const = 0;
+
+        //! Whether the body's prefab was asked to spawn and hasn't finished, e.g. for a loading screen to wait on.
+        virtual bool IsSpawning() const = 0;
     };
 
     //! Bus for ThingBodyRequests.

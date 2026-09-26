@@ -41,6 +41,7 @@ namespace Things
 
         //! Whether the body is in the world.
         bool IsInWorld() const override;
+        bool IsSpawning() const override;
 
         //! Brings the body into the world or takes it out.
         void OnOwnerChanged(AZ::EntityId oldOwner, AZ::EntityId newOwner) override;
