@@ -94,6 +94,15 @@ namespace Things
 
         //! Reads every blueprint file of the game and its mods again.
         virtual void ReloadData() = 0;
+
+        //! Writes a snapshot of a Thing and everything it owns into output, e.g. for a saved game: its blueprint name,
+        //! tags, every part's reflected fields ({"Blueprint", "Tags", "Parts", "Owned": [...]}). Runtime state survives
+        //! only in reflected fields. Returns false when it is not a Thing.
+        virtual bool SaveThing(AZ::EntityId thing, rapidjson::Value& output, rapidjson::Document::AllocatorType& allocator) const = 0;
+
+        //! Builds a Thing and everything it owns again from a snapshot (SaveThing) at a transform, owned by owner or
+        //! top-level when it is invalid; its blueprint isn't read. Returns an invalid id, with a warning, on failure.
+        virtual AZ::EntityId LoadThing(const rapidjson::Value& snapshot, const AZ::Transform& transform, AZ::EntityId owner) = 0;
     };
 
     //! Traits of the ThingSystemRequestBus: one global handler.

@@ -369,4 +369,51 @@ namespace Things::Testing
         )"));
         EXPECT_EQ(Things().GetTopLevelThings().size(), 1u);
     }
+    TEST_F(ThingSpawnTests, ASavedThingIsBuiltAgainAsItWas)
+    {
+        TraceCounter trace;
+        const AZ::Transform place = AZ::Transform::CreateTranslation(AZ::Vector3(4.0f, 5.0f, 6.0f));
+        const AZ::EntityId hero = Things().Spawn("Hero", AZ::Transform::CreateIdentity());
+        FindPart<TestValuePart>(hero)->m_value = 42;
+        FindPart<TestValuePart>(hero)->m_text = "scarred";
+        Things().Destroy(Things().GetOwned(hero)[1]);
+        const AZ::EntityId rock = Things().SpawnOwned(hero, "Rock");
+        FindPart<TestValuePart>(rock)->m_value = 9;
+
+        rapidjson::Document snapshot;
+        ASSERT_TRUE(Things().SaveThing(hero, snapshot, snapshot.GetAllocator()));
+        Things().Destroy(hero);
+        EXPECT_TRUE(Things().GetTopLevelThings().empty());
+
+        const AZ::EntityId loaded = Things().LoadThing(snapshot, place, AZ::EntityId());
+        ASSERT_TRUE(loaded.IsValid());
+        EXPECT_EQ(Things().GetBlueprint(loaded), "Hero");
+        EXPECT_TRUE(Things().HasTag(loaded, "Hero"));
+        EXPECT_FALSE(Things().HasTag(loaded, "Monster"));
+        EXPECT_EQ(FindPart<TestValuePart>(loaded)->m_value, 42);
+        EXPECT_EQ(FindPart<TestValuePart>(loaded)->m_text, "scarred");
+        EXPECT_EQ(FindPart<ThingComponent>(loaded)->GetParts().size(), 3u);
+        AZ::Transform world = AZ::Transform::CreateIdentity();
+        AZ::TransformBus::EventResult(world, loaded, &AZ::TransformBus::Events::GetWorldTM);
+        EXPECT_TRUE(world.IsClose(place));
+
+        const AZStd::vector<AZ::EntityId> owned = Things().GetOwned(loaded);
+        ASSERT_EQ(owned.size(), 2u) << "what it owned when saved, not what its blueprint gives";
+        EXPECT_EQ(Things().GetBlueprint(owned[0]), "Sword");
+        EXPECT_EQ(SumTree(owned[0]), 4);
+        EXPECT_EQ(Things().GetBlueprint(owned[1]), "Rock");
+        EXPECT_EQ(SumTree(owned[1]), 9);
+        EXPECT_EQ(Things().GetOwner(owned[1]), loaded);
+        EXPECT_EQ(FindPart<TestListenerPart>(loaded)->m_events.back(), "Built") << "a loaded Thing is built like a spawned one";
+        EXPECT_EQ(trace.m_warnings, 0);
+    }
+
+    TEST_F(ThingSpawnTests, ASnapshotWithoutPartsWarns)
+    {
+        TraceCounter trace;
+        rapidjson::Document snapshot;
+        snapshot.Parse(R"({"Parts": 3})");
+        EXPECT_FALSE(Things().LoadThing(snapshot, AZ::Transform::CreateIdentity(), AZ::EntityId()).IsValid());
+        EXPECT_GT(trace.m_warnings, 0);
+    }
 } // namespace Things::Testing

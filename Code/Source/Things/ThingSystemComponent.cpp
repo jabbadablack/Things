@@ -441,6 +441,38 @@ namespace Things
         EnsureLoaded();
     }
 
+    bool ThingSystemComponent::SaveThing(AZ::EntityId thing, rapidjson::Value& output, rapidjson::Document::AllocatorType& allocator) const
+    {
+        const ThingComponent* component = m_registry.Find(thing);
+        if (!component)
+        {
+            AZ_Warning("Things", false, "%s can't be saved: it is not a Thing.", thing.ToString().c_str());
+            return false;
+        }
+        ThingFactory::SaveOne(*component, output, allocator);
+        rapidjson::Value owned(rapidjson::kArrayType);
+        for (const AZ::EntityId& child : component->GetOwned())
+        {
+            rapidjson::Value snapshot;
+            if (SaveThing(child, snapshot, allocator))
+            {
+                owned.PushBack(snapshot, allocator);
+            }
+        }
+        output.AddMember(rapidjson::StringRef(ThingFactory::OwnedKey), owned, allocator);
+        return true;
+    }
+
+    AZ::EntityId ThingSystemComponent::LoadThing(const rapidjson::Value& snapshot, const AZ::Transform& transform, AZ::EntityId owner)
+    {
+        if (owner.IsValid() && !IsThing(owner))
+        {
+            AZ_Warning("Things", false, "A saved Thing can't be given to %s, which is not a Thing.", owner.ToString().c_str());
+            return AZ::EntityId();
+        }
+        return m_factory.BuildSnapshot(snapshot, transform, owner);
+    }
+
     AZStd::vector<AZStd::string> ThingSystemComponent::GetBlueprintSources(const AZStd::string& name)
     {
         EnsureLoaded();

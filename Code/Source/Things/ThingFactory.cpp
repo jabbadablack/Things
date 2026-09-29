@@ -3,6 +3,7 @@
 #include <AzCore/Component/Entity.h>
 #include <AzCore/Component/TransformBus.h>
 #include <AzCore/Console/IConsole.h>
+#include <AzCore/Serialization/Json/JsonSerialization.h>
 #include <AzFramework/Entity/GameEntityContextBus.h>
 #include <Blueprints/BlueprintLibrary.h>
 #include <Things/ThingBus.h>
@@ -178,6 +179,117 @@ namespace Things
 
         BuildChildren(resolved, name, id, depth, built);
         return id;
+    }
+
+    AZ::EntityId ThingFactory::BuildSnapshot(const rapidjson::Value& snapshot, const AZ::Transform& transform, AZ::EntityId owner)
+    {
+        AZStd::vector<AZ::EntityId> built;
+        const AZ::EntityId thing = BuildSnapshotAt(snapshot, transform, owner, 0, built);
+        for (const AZ::EntityId& id : built)
+        {
+            ThingNotificationBus::Event(id, &ThingNotifications::OnThingBuilt);
+        }
+        return thing;
+    }
+
+    AZ::EntityId ThingFactory::BuildSnapshotAt(
+        const rapidjson::Value& snapshot,
+        const AZ::Transform& transform,
+        AZ::EntityId owner,
+        AZ::u32 depth,
+        AZStd::vector<AZ::EntityId>& built)
+    {
+        const auto blueprint = snapshot.IsObject() ? snapshot.FindMember(BlueprintLibrary::BlueprintKey) : snapshot.MemberEnd();
+        const auto parts = snapshot.IsObject() ? snapshot.FindMember(BlueprintLibrary::PartsKey) : snapshot.MemberEnd();
+        if (!snapshot.IsObject() || parts == snapshot.MemberEnd() || !parts->value.IsObject())
+        {
+            AZ_Warning("Things", false, "A snapshot of a Thing needs an object of \"Parts\"; nothing is built.");
+            return AZ::EntityId();
+        }
+        if (snapshot.HasMember(BlueprintLibrary::ChildrenKey))
+        {
+            AZ_Warning("Things", false, "A snapshot's \"Children\" are ignored; what a Thing owned is in \"Owned\".");
+        }
+        const AZStd::string name = blueprint != snapshot.MemberEnd() && blueprint->value.IsString()
+            ? AZStd::string(blueprint->value.GetString(), blueprint->value.GetStringLength())
+            : AZStd::string("Snapshot");
+
+        rapidjson::Document own;
+        own.SetObject();
+        for (const char* key : { BlueprintLibrary::TagsKey, BlueprintLibrary::PartsKey })
+        {
+            if (const auto member = snapshot.FindMember(key); member != snapshot.MemberEnd())
+            {
+                own.AddMember(rapidjson::StringRef(key), rapidjson::Value(member->value, own.GetAllocator()), own.GetAllocator());
+            }
+        }
+        const AZ::EntityId thing = BuildAt(own, name, transform, owner, depth, built);
+        const auto owned = snapshot.FindMember(OwnedKey);
+        if (!thing.IsValid() || owned == snapshot.MemberEnd())
+        {
+            return thing;
+        }
+        if (!owned->value.IsArray())
+        {
+            AZ_Warning("Things", false, "Snapshot of '%s': \"Owned\" must be a list of snapshots.", name.c_str());
+            return thing;
+        }
+        if (depth >= MaxChildDepth && !owned->value.Empty())
+        {
+            AZ_Warning(
+                "Things", false, "Snapshot of '%s': owned Things nest deeper than %u and are not built.", name.c_str(), MaxChildDepth);
+            return thing;
+        }
+        for (const rapidjson::Value& child : owned->value.GetArray())
+        {
+            BuildSnapshotAt(child, AZ::Transform::CreateIdentity(), thing, depth + 1, built);
+        }
+        return thing;
+    }
+
+    void ThingFactory::SaveOne(const ThingComponent& thing, rapidjson::Value& output, rapidjson::Document::AllocatorType& allocator)
+    {
+        output.SetObject();
+        output.AddMember(
+            rapidjson::StringRef(BlueprintLibrary::BlueprintKey), rapidjson::Value(thing.GetBlueprint().c_str(), allocator), allocator);
+        rapidjson::Value tags(rapidjson::kObjectType);
+        for (const AZStd::string& tag : thing.GetTags())
+        {
+            tags.AddMember(rapidjson::Value(tag.c_str(), allocator), rapidjson::Value(true), allocator);
+        }
+        output.AddMember(rapidjson::StringRef(BlueprintLibrary::TagsKey), tags, allocator);
+
+        rapidjson::Value parts(rapidjson::kObjectType);
+        const AZ::Entity* entity = thing.GetEntity();
+        for (const auto& [key, componentId] : thing.GetParts())
+        {
+            const AZ::Component* component = entity ? entity->FindComponent(componentId) : nullptr;
+            if (!component)
+            {
+                AZ_Warning("Things", false, "'%s' has lost its part '%s'; it is not saved.", thing.GetBlueprint().c_str(), key.c_str());
+                continue;
+            }
+            const AZ::TypeId type = component->RTTI_GetType();
+            rapidjson::Value part;
+            const AZ::JsonSerializationResult::ResultCode stored = AZ::JsonSerialization::Store(part, allocator, component, nullptr, type);
+            AZ_Warning(
+                "Things",
+                stored.GetProcessing() != AZ::JsonSerializationResult::Processing::Halted,
+                "'%s' part '%s' could not be saved: %s",
+                thing.GetBlueprint().c_str(),
+                key.c_str(),
+                stored.ToString("").c_str());
+            if (!part.IsObject())
+            {
+                part.SetObject();
+            }
+            part.RemoveMember("Id");
+            rapidjson::Value typeName;
+            AZ::JsonSerialization::StoreTypeId(typeName, allocator, type);
+            part.AddMember(rapidjson::StringRef(BlueprintLibrary::TypeKey), typeName, allocator);
+            parts.AddMember(rapidjson::Value(key.c_str(), allocator), part, allocator);
+        }
+        output.AddMember(rapidjson::StringRef(BlueprintLibrary::PartsKey), parts, allocator);
     }
 
     void ThingFactory::BuildChildren(

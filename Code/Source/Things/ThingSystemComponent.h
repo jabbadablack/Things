@@ -60,6 +60,8 @@ namespace Things
         AZStd::vector<AZStd::string> GetBlueprintSources(const AZStd::string& name) override;
         bool AddBlueprintLayers(AZStd::string_view json, AZStd::string_view source) override;
         void ReloadData() override;
+        bool SaveThing(AZ::EntityId thing, rapidjson::Value& output, rapidjson::Document::AllocatorType& allocator) const override;
+        AZ::EntityId LoadThing(const rapidjson::Value& snapshot, const AZ::Transform& transform, AZ::EntityId owner) override;
         //! @}
 
         //! The registry of active Things.
