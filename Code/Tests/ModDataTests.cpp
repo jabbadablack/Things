@@ -1,5 +1,6 @@
 #include <AzCore/Component/ComponentApplicationBus.h>
 #include <AzCore/Serialization/SerializeContext.h>
+#include <AzFramework/IO/LocalFileIO.h>
 #include <AzTest/AzTest.h>
 #include <TestParts.h>
 #include <Things/ModDataBus.h>
@@ -17,6 +18,19 @@ namespace Things::Testing
 
             int m_a = 0; //!< A number.
             AZStd::unordered_map<AZStd::string, int> m_b; //!< Numbers by key.
+        };
+
+        //! Files read like a packaged game's: every folder is inside an archive, so IsDirectory, which asks the disk, says no.
+        class PakLikeFileIO : public AZ::IO::LocalFileIO
+        {
+        public:
+            AZ_CLASS_ALLOCATOR(PakLikeFileIO, AZ::SystemAllocator);
+
+            //! No folder is on the disk.
+            bool IsDirectory([[maybe_unused]] const char* filePath) override
+            {
+                return false;
+            }
         };
 
         //! The folder with the gem's test data.
@@ -89,6 +103,20 @@ namespace Things::Testing
         EXPECT_EQ(files[0].m_relativePath, AZ::IO::Path("blueprints/props/crate.json"));
         EXPECT_EQ(files[1].m_root, "A_First");
         EXPECT_EQ(files[2].m_root, "B_Second");
+    }
+
+    TEST_F(ModDataTests, FindFilesFindsFilesInFoldersOnlyAnArchiveHas)
+    {
+        UseTestData();
+        AZ::IO::FileIOBase* disk = AZ::IO::FileIOBase::GetInstance();
+        PakLikeFileIO pak;
+        AZ::IO::FileIOBase::SetInstance(nullptr);
+        AZ::IO::FileIOBase::SetInstance(&pak);
+        const AZStd::vector<DataFile> files = ModDataInterface::Get()->FindFiles("blueprints", ".json");
+        AZ::IO::FileIOBase::SetInstance(nullptr);
+        AZ::IO::FileIOBase::SetInstance(disk);
+        ASSERT_EQ(files.size(), 3u);
+        EXPECT_EQ(files[0].m_relativePath, AZ::IO::Path("blueprints/props/crate.json"));
     }
 
     TEST_F(ModDataTests, ReadLayeredMergesEveryRootsCopyInOrder)

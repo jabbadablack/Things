@@ -32,24 +32,23 @@ namespace Things
                 });
         }
 
-        //! Adds every file with the extension below folder, recursively, with paths relative to the root.
+        //! Adds every file with the extension below folder, recursively, with paths relative to the root. Every other entry
+        //! is looked into, since IsDirectory asks only the disk and misses folders inside archives; a file lists nothing.
         void CollectFiles(
             const DataRoot& root, const AZ::IO::Path& relativeFolder, AZStd::string_view extension, AZStd::vector<DataFile>& out)
         {
-            AZ::IO::FileIOBase* fileIO = AZ::IO::FileIOBase::GetInstance();
             ForEachEntry(
                 root.m_path / relativeFolder,
                 [&](AZ::IO::PathView name)
                 {
                     const AZ::IO::Path relative = relativeFolder / name;
-                    const AZ::IO::Path full = root.m_path / relative;
-                    if (fileIO->IsDirectory(full.c_str()))
+                    if (AZ::StringFunc::Equal(name.Extension().Native(), extension))
+                    {
+                        out.push_back({ root.m_name, root.m_path / relative, relative });
+                    }
+                    else if (name != "." && name != "..")
                     {
                         CollectFiles(root, relative, extension, out);
-                    }
-                    else if (AZ::StringFunc::Equal(name.Extension().Native(), extension))
-                    {
-                        out.push_back({ root.m_name, full, relative });
                     }
                 });
         }
@@ -135,17 +134,11 @@ namespace Things
 
     AZStd::vector<DataFile> ModDataSystemComponent::FindFiles(AZStd::string_view folder, AZStd::string_view extension) const
     {
-        AZ::IO::FileIOBase* fileIO = AZ::IO::FileIOBase::GetInstance();
-        AZ_Assert(fileIO, "ModDataSystemComponent needs a FileIO instance.");
+        AZ_Assert(AZ::IO::FileIOBase::GetInstance(), "ModDataSystemComponent needs a FileIO instance.");
 
         AZStd::vector<DataFile> files;
         for (const DataRoot& root : m_roots)
         {
-            if (!fileIO->IsDirectory((root.m_path / folder).c_str()))
-            {
-                continue;
-            }
-
             const size_t first = files.size();
             CollectFiles(root, AZ::IO::Path(folder), extension, files);
             AZStd::sort(
