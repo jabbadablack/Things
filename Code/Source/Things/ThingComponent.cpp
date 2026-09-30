@@ -12,8 +12,9 @@ namespace Things
         if (auto* serializeContext = azrtti_cast<AZ::SerializeContext*>(context))
         {
             serializeContext->Class<ThingComponent, AZ::Component>()
-                ->Version(0)
+                ->Version(1)
                 ->Field("Blueprint", &ThingComponent::m_blueprint)
+                ->Field("Key", &ThingComponent::m_key)
                 ->Field("Owner", &ThingComponent::m_owner)
                 ->Field("Owned", &ThingComponent::m_owned)
                 ->Field("Tags", &ThingComponent::m_tags)
@@ -52,6 +53,16 @@ namespace Things
             !GetEntity() || GetEntity()->GetState() < AZ::Entity::State::Activating,
             "Use Transfer to change the owner of an active Thing.");
         m_owner = owner;
+    }
+
+    const AZStd::string& ThingComponent::GetKey() const
+    {
+        return m_key;
+    }
+
+    void ThingComponent::SetKey(AZStd::string key)
+    {
+        m_key = AZStd::move(key);
     }
 
     const AZStd::vector<AZ::EntityId>& ThingComponent::GetOwned() const

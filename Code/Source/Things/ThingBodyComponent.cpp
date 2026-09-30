@@ -160,16 +160,43 @@ namespace Things
         return AZ::EntityId();
     }
 
-    void ThingBodyComponent::OnOwnerChanged([[maybe_unused]] AZ::EntityId oldOwner, AZ::EntityId newOwner)
+    void ThingBodyComponent::OnOwnerChanged([[maybe_unused]] AZ::EntityId oldOwner, [[maybe_unused]] AZ::EntityId newOwner)
+    {
+        FollowBearer();
+        m_socket = AZ::EntityId();
+        UpdateBody();
+    }
+
+    void ThingBodyComponent::OnAncestryChanged()
+    {
+        FollowBearer();
+        m_socket = AZ::EntityId();
+        UpdateBody();
+    }
+
+    void ThingBodyComponent::FollowBearer()
     {
         ThingBodyNotificationBus::Handler::BusDisconnect();
-        m_following = newOwner;
+        m_following = FindBearer();
         if (m_following.IsValid())
         {
             ThingBodyNotificationBus::Handler::BusConnect(m_following);
         }
-        m_socket = AZ::EntityId();
-        UpdateBody();
+    }
+
+    AZ::EntityId ThingBodyComponent::FindBearer() const
+    {
+        const ThingSystemRequests* things = ThingSystemInterface::Get();
+        if (!things)
+        {
+            return AZ::EntityId();
+        }
+        return things->FindAncestor(
+            GetEntityId(),
+            [](AZ::EntityId ancestor)
+            {
+                return ThingBodyRequestBus::HasHandlers(ancestor);
+            });
     }
 
     void ThingBodyComponent::OnBodySpawned()
@@ -192,11 +219,7 @@ namespace Things
         m_socket = AZ::EntityId();
         ThingBodyRequestBus::Handler::BusConnect(GetEntityId());
         ThingNotificationBus::Handler::BusConnect(GetEntityId());
-        m_following = GetOwner();
-        if (m_following.IsValid())
-        {
-            ThingBodyNotificationBus::Handler::BusConnect(m_following);
-        }
+        FollowBearer();
         AZ_Warning(
             "Things",
             m_prefab.GetId().IsValid() || !m_looks.empty(),
@@ -306,9 +329,9 @@ namespace Things
         {
             return false;
         }
-        bool ownerShown = true;
-        ThingBodyRequestBus::EventResult(ownerShown, owner, &ThingBodyRequests::IsShown);
-        return ownerShown;
+        bool bearerShown = true;
+        ThingBodyRequestBus::EventResult(bearerShown, m_following, &ThingBodyRequests::IsShown);
+        return bearerShown;
     }
 
     void ThingBodyComponent::SetEntityActive(AZ::EntityId entity, bool active)
@@ -345,7 +368,7 @@ namespace Things
                 AZ::EntityId socket;
                 if (!socketName.empty())
                 {
-                    ThingBodyRequestBus::EventResult(socket, owner, &ThingBodyRequests::FindBodyEntity, socketName);
+                    ThingBodyRequestBus::EventResult(socket, m_following, &ThingBodyRequests::FindBodyEntity, socketName);
                 }
                 showing = showing && socket.IsValid();
                 parent = socket.IsValid() ? socket : GetEntityId();

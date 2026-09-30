@@ -61,6 +61,15 @@ namespace Things
         //! The Things this one owns directly, in order.
         virtual AZStd::vector<AZ::EntityId> GetOwned(AZ::EntityId thing) const = 0;
 
+        //! The key the Thing is known by among what its owner owns (a blueprint child's key, e.g. "HandL"), or empty.
+        virtual AZStd::string GetKey(AZ::EntityId thing) const = 0;
+
+        //! Sets the key the Thing is known by among what its owner owns, e.g. a prosthetic fitted as "HandL".
+        virtual void SetKey(AZ::EntityId thing, const AZStd::string& key) = 0;
+
+        //! The first Thing the owner owns directly under the key, or an invalid id.
+        virtual AZ::EntityId FindOwnedByKey(AZ::EntityId owner, const AZStd::string& key) const = 0;
+
         //! The blueprint the Thing was built from, or the layers joined with '+' for composed Things.
         virtual AZStd::string GetBlueprint(AZ::EntityId thing) const = 0;
 

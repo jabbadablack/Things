@@ -209,6 +209,9 @@ namespace Things
                 ->Event("IsThing", &ThingSystemRequests::IsThing)
                 ->Event("GetOwner", &ThingSystemRequests::GetOwner)
                 ->Event("GetOwned", &ThingSystemRequests::GetOwned)
+                ->Event("GetKey", &ThingSystemRequests::GetKey)
+                ->Event("SetKey", &ThingSystemRequests::SetKey)
+                ->Event("FindOwnedByKey", &ThingSystemRequests::FindOwnedByKey)
                 ->Event("GetBlueprint", &ThingSystemRequests::GetBlueprint)
                 ->Event("HasTag", &ThingSystemRequests::HasTag)
                 ->Event("GetTopLevelThings", &ThingSystemRequests::GetTopLevelThings)
@@ -374,6 +377,40 @@ namespace Things
         return component ? component->GetOwned() : AZStd::vector<AZ::EntityId>();
     }
 
+    AZStd::string ThingSystemComponent::GetKey(AZ::EntityId thing) const
+    {
+        const ThingComponent* component = m_registry.Find(thing);
+        return component ? component->GetKey() : AZStd::string();
+    }
+
+    void ThingSystemComponent::SetKey(AZ::EntityId thing, const AZStd::string& key)
+    {
+        ThingComponent* component = m_registry.Find(thing);
+        AZ_Warning("Things", component, "%s is not a Thing and can't be given a key.", thing.ToString().c_str());
+        if (component)
+        {
+            component->SetKey(key);
+        }
+    }
+
+    AZ::EntityId ThingSystemComponent::FindOwnedByKey(AZ::EntityId owner, const AZStd::string& key) const
+    {
+        const ThingComponent* component = m_registry.Find(owner);
+        if (!component || key.empty())
+        {
+            return AZ::EntityId();
+        }
+        for (const AZ::EntityId& owned : component->GetOwned())
+        {
+            const ThingComponent* child = m_registry.Find(owned);
+            if (child && child->GetKey() == key)
+            {
+                return owned;
+            }
+        }
+        return AZ::EntityId();
+    }
+
     AZStd::string ThingSystemComponent::GetBlueprint(AZ::EntityId thing) const
     {
         const ThingComponent* component = m_registry.Find(thing);
@@ -443,6 +480,12 @@ namespace Things
 
     bool ThingSystemComponent::SaveThing(AZ::EntityId thing, rapidjson::Value& output, rapidjson::Document::AllocatorType& allocator) const
     {
+        return SaveAt(thing, 0, output, allocator);
+    }
+
+    bool ThingSystemComponent::SaveAt(
+        AZ::EntityId thing, AZ::u32 depth, rapidjson::Value& output, rapidjson::Document::AllocatorType& allocator) const
+    {
         const ThingComponent* component = m_registry.Find(thing);
         if (!component)
         {
@@ -451,10 +494,16 @@ namespace Things
         }
         ThingFactory::SaveOne(*component, output, allocator);
         rapidjson::Value owned(rapidjson::kArrayType);
+        AZ_Warning(
+            "Things",
+            depth < ThingFactory::MaxChildDepth || component->GetOwned().empty(),
+            "'%s' owns Things nested deeper than %u; they are not saved.",
+            component->GetBlueprint().c_str(),
+            ThingFactory::MaxChildDepth);
         for (const AZ::EntityId& child : component->GetOwned())
         {
             rapidjson::Value snapshot;
-            if (SaveThing(child, snapshot, allocator))
+            if (depth < ThingFactory::MaxChildDepth && SaveAt(child, depth + 1, snapshot, allocator))
             {
                 owned.PushBack(snapshot, allocator);
             }

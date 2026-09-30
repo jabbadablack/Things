@@ -49,6 +49,9 @@ namespace Things
         bool IsThing(AZ::EntityId entity) const override;
         AZ::EntityId GetOwner(AZ::EntityId thing) const override;
         AZStd::vector<AZ::EntityId> GetOwned(AZ::EntityId thing) const override;
+        AZStd::string GetKey(AZ::EntityId thing) const override;
+        void SetKey(AZ::EntityId thing, const AZStd::string& key) override;
+        AZ::EntityId FindOwnedByKey(AZ::EntityId owner, const AZStd::string& key) const override;
         AZStd::string GetBlueprint(AZ::EntityId thing) const override;
         bool HasTag(AZ::EntityId thing, const AZStd::string& tag) const override;
         AZ::EntityId FindAncestor(AZ::EntityId thing, const AZStd::function<bool(AZ::EntityId)>& match) const override;
@@ -77,6 +80,9 @@ namespace Things
     private:
         //! Marks the blueprints stale so they are read again on next use.
         void OnModDataChanged() override;
+
+        //! Writes a snapshot of a Thing at a nesting depth and of what it owns, down to the factory's depth limit.
+        bool SaveAt(AZ::EntityId thing, AZ::u32 depth, rapidjson::Value& output, rapidjson::Document::AllocatorType& allocator) const;
 
         //! Reads the blueprint files unless they are current.
         void EnsureLoaded();

@@ -181,6 +181,18 @@ namespace Things::Testing
         }
 
         //! Records the event.
+        void OnTreeChanged(AZ::EntityId) override
+        {
+            m_events.push_back("TreeChanged");
+        }
+
+        //! Records the event.
+        void OnAncestryChanged() override
+        {
+            m_events.push_back("AncestryChanged");
+        }
+
+        //! Records the event.
         void OnThingDestroying() override
         {
             m_events.push_back("Destroying");

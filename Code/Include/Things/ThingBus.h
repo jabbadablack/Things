@@ -37,6 +37,17 @@ namespace Things
         {
         }
 
+        //! A Thing somewhere below this one (at any depth) was added, taken away or moved, e.g. an item put into a bag
+        //! held in a hand; changed is that Thing. The direct owner hears OnOwnedAdded or OnOwnedRemoved as well.
+        virtual void OnTreeChanged([[maybe_unused]] AZ::EntityId changed)
+        {
+        }
+
+        //! A Thing above this one got a new owner, so this Thing's ancestors changed, e.g. a torch in a severed hand.
+        virtual void OnAncestryChanged()
+        {
+        }
+
         //! The Thing is about to be destroyed; everything it owns is destroyed with it.
         virtual void OnThingDestroying()
         {

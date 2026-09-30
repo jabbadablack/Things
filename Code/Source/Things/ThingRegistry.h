@@ -51,8 +51,14 @@ namespace Things
         //! Visits thing at the given depth; returns false when the visit should stop.
         bool VisitAt(AZ::EntityId thing, AZ::u32 depth, const TreeVisitor& visitor) const;
 
-        //! Takes thing off its owner's owned list and tells the owner.
+        //! Takes thing off its owner's owned list and tells the owner and everything above it.
         void Detach(ThingComponent& thing);
+
+        //! Sends OnTreeChanged(changed) to start and every Thing above it.
+        void NotifyAncestors(AZ::EntityId start, AZ::EntityId changed) const;
+
+        //! Sends OnAncestryChanged to everything below thing.
+        void NotifyDescendants(AZ::EntityId thing) const;
 
         AZStd::unordered_map<AZ::EntityId, ThingComponent*> m_things; //!< Registered Things by entity id.
     };

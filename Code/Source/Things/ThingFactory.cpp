@@ -118,7 +118,7 @@ namespace Things
         const rapidjson::Value& resolved, const AZStd::string& name, const AZ::Transform& transform, AZ::EntityId owner)
     {
         AZStd::vector<AZ::EntityId> built;
-        const AZ::EntityId thing = BuildAt(resolved, name, transform, owner, 0, built);
+        const AZ::EntityId thing = BuildAt(resolved, name, {}, transform, owner, 0, built);
         for (const AZ::EntityId& id : built)
         {
             ThingNotificationBus::Event(id, &ThingNotifications::OnThingBuilt);
@@ -129,6 +129,7 @@ namespace Things
     AZ::EntityId ThingFactory::BuildAt(
         const rapidjson::Value& resolved,
         const AZStd::string& name,
+        const AZStd::string& key,
         const AZ::Transform& transform,
         AZ::EntityId owner,
         AZ::u32 depth,
@@ -145,6 +146,7 @@ namespace Things
 
         auto* thing = entity->CreateComponent<ThingComponent>();
         thing->SetBlueprint(name);
+        thing->SetKey(key);
         thing->SetOwner(owner);
         thing->SetTags(ReadTags(resolved, name));
         AddParts(*entity, *thing, resolved, name);
@@ -223,7 +225,11 @@ namespace Things
                 own.AddMember(rapidjson::StringRef(key), rapidjson::Value(member->value, own.GetAllocator()), own.GetAllocator());
             }
         }
-        const AZ::EntityId thing = BuildAt(own, name, transform, owner, depth, built);
+        const auto key = snapshot.FindMember(KeyKey);
+        const AZStd::string ownKey = key != snapshot.MemberEnd() && key->value.IsString()
+            ? AZStd::string(key->value.GetString(), key->value.GetStringLength())
+            : AZStd::string();
+        const AZ::EntityId thing = BuildAt(own, name, ownKey, transform, owner, depth, built);
         const auto owned = snapshot.FindMember(OwnedKey);
         if (!thing.IsValid() || owned == snapshot.MemberEnd())
         {
@@ -258,6 +264,10 @@ namespace Things
             tags.AddMember(rapidjson::Value(tag.c_str(), allocator), rapidjson::Value(true), allocator);
         }
         output.AddMember(rapidjson::StringRef(BlueprintLibrary::TagsKey), tags, allocator);
+        if (!thing.GetKey().empty())
+        {
+            output.AddMember(rapidjson::StringRef(KeyKey), rapidjson::Value(thing.GetKey().c_str(), allocator), allocator);
+        }
 
         rapidjson::Value parts(rapidjson::kObjectType);
         const AZ::Entity* entity = thing.GetEntity();
@@ -318,7 +328,8 @@ namespace Things
 
         for (const auto& child : children->value.GetObject())
         {
-            [[maybe_unused]] const char* childId = child.name.GetString();
+            const AZStd::string childKey(child.name.GetString(), child.name.GetStringLength());
+            [[maybe_unused]] const char* childId = childKey.c_str();
             const auto blueprint =
                 child.value.IsObject() ? child.value.FindMember(BlueprintLibrary::BlueprintKey) : child.value.MemberEnd();
             if (!child.value.IsObject() || blueprint == child.value.MemberEnd() || !blueprint->value.IsString())
@@ -343,7 +354,7 @@ namespace Things
 
             if (child.value.MemberCount() == 1)
             {
-                BuildAt(*childResolved, childBlueprint, AZ::Transform::CreateIdentity(), owner, depth + 1, built);
+                BuildAt(*childResolved, childBlueprint, childKey, AZ::Transform::CreateIdentity(), owner, depth + 1, built);
                 continue;
             }
 
@@ -354,7 +365,7 @@ namespace Things
             rapidjson::Document layered;
             layered.CopyFrom(*childResolved, layered.GetAllocator());
             BlueprintLibrary::ApplyLayer(layered, layered.GetAllocator(), overrides, childBlueprint);
-            BuildAt(layered, childBlueprint, AZ::Transform::CreateIdentity(), owner, depth + 1, built);
+            BuildAt(layered, childBlueprint, childKey, AZ::Transform::CreateIdentity(), owner, depth + 1, built);
         }
     }
 } // namespace Things

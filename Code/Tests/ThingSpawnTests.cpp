@@ -115,7 +115,7 @@ namespace Things::Testing
         const AZ::EntityId hero = Things().Spawn("Hero", AZ::Transform::CreateIdentity());
         const TestListenerPart* ears = FindPart<TestListenerPart>(hero);
         ASSERT_NE(ears, nullptr);
-        EXPECT_EQ(ears->m_events, (AZStd::vector<AZStd::string>{ "OwnedAdded", "OwnedAdded", "Built" }));
+        EXPECT_EQ(ears->m_events, (AZStd::vector<AZStd::string>{ "OwnedAdded", "TreeChanged", "OwnedAdded", "TreeChanged", "Built" }));
     }
 
     TEST_F(ThingSpawnTests, SpawnComposedLayersBlueprints)
@@ -202,8 +202,8 @@ namespace Things::Testing
         EXPECT_TRUE(Things().Transfer(blade, holder));
         EXPECT_EQ(Things().GetOwner(blade), holder);
         EXPECT_EQ(Things().GetOwned(hero).size(), 1u);
-        EXPECT_EQ(FindPart<TestListenerPart>(holder)->m_events.back(), "OwnedAdded");
-        EXPECT_EQ(FindPart<TestListenerPart>(hero)->m_events.back(), "OwnedRemoved");
+        EXPECT_EQ(FindPart<TestListenerPart>(holder)->m_events.end()[-2], "OwnedAdded") << "then TreeChanged";
+        EXPECT_EQ(FindPart<TestListenerPart>(hero)->m_events.end()[-2], "OwnedRemoved");
 
         TraceCounter trace;
         EXPECT_FALSE(Things().Transfer(holder, blade)) << "a Thing can't be owned by what it owns";
@@ -233,7 +233,7 @@ namespace Things::Testing
         EXPECT_FALSE(Things().IsThing(hero));
         EXPECT_FALSE(Things().IsThing(owned[0]));
         EXPECT_TRUE(Things().GetOwned(holder).empty());
-        EXPECT_EQ(holderEars->m_events.back(), "OwnedRemoved");
+        EXPECT_EQ(holderEars->m_events.end()[-2], "OwnedRemoved");
 
         FlushQueuedEvents();
         EXPECT_EQ(FindEntity(hero), nullptr);
@@ -406,6 +406,112 @@ namespace Things::Testing
         EXPECT_EQ(Things().GetOwner(owned[1]), loaded);
         EXPECT_EQ(FindPart<TestListenerPart>(loaded)->m_events.back(), "Built") << "a loaded Thing is built like a spawned one";
         EXPECT_EQ(trace.m_warnings, 0);
+    }
+
+    TEST_F(ThingSpawnTests, ChildrenKeepTheirKeys)
+    {
+        const AZ::EntityId hero = Things().Spawn("Hero", AZ::Transform::CreateIdentity());
+        const AZStd::vector<AZ::EntityId> owned = Things().GetOwned(hero);
+        ASSERT_EQ(owned.size(), 2u);
+        EXPECT_EQ(Things().GetKey(owned[0]), "Blade");
+        EXPECT_EQ(Things().FindOwnedByKey(hero, "Pebble"), owned[1]);
+        EXPECT_FALSE(Things().FindOwnedByKey(hero, "Shield").IsValid());
+        EXPECT_TRUE(Things().GetKey(hero).empty()) << "a top-level Thing has no key";
+
+        const AZ::EntityId rock = Things().SpawnOwned(hero, "Rock");
+        EXPECT_TRUE(Things().GetKey(rock).empty());
+        Things().SetKey(rock, "Spare");
+        EXPECT_EQ(Things().FindOwnedByKey(hero, "Spare"), rock);
+
+        const AZ::EntityId holder = Things().Spawn("Holder", AZ::Transform::CreateIdentity());
+        ASSERT_TRUE(Things().Transfer(owned[0], holder));
+        EXPECT_EQ(Things().FindOwnedByKey(holder, "Blade"), owned[0]) << "a key moves with its Thing";
+
+        rapidjson::Document snapshot;
+        ASSERT_TRUE(Things().SaveThing(hero, snapshot, snapshot.GetAllocator()));
+        const AZ::EntityId loaded = Things().LoadThing(snapshot, AZ::Transform::CreateIdentity(), AZ::EntityId());
+        EXPECT_TRUE(Things().FindOwnedByKey(loaded, "Pebble").IsValid()) << "keys survive a save";
+        EXPECT_TRUE(Things().FindOwnedByKey(loaded, "Spare").IsValid());
+    }
+
+    TEST_F(ThingSpawnTests, DeepTreesSaveAndLoadWhole)
+    {
+        constexpr AZ::u32 Depth = 12;
+        TraceCounter trace;
+        const AZ::EntityId root = Things().Spawn("Rock", AZ::Transform::CreateIdentity());
+        AZ::EntityId deepest = root;
+        for (AZ::u32 i = 0; i < Depth; ++i)
+        {
+            deepest = Things().SpawnOwned(deepest, "Rock");
+        }
+        ASSERT_EQ(SumTree(root), static_cast<int>(Depth) + 1);
+
+        rapidjson::Document snapshot;
+        ASSERT_TRUE(Things().SaveThing(root, snapshot, snapshot.GetAllocator()));
+        const AZ::EntityId loaded = Things().LoadThing(snapshot, AZ::Transform::CreateIdentity(), AZ::EntityId());
+        EXPECT_EQ(SumTree(loaded), static_cast<int>(Depth) + 1) << "a creature, its arm, hand, bag and what is in it";
+        EXPECT_EQ(trace.m_warnings, 0);
+    }
+
+    TEST_F(ThingSpawnTests, TreeChangesReachEveryAncestorAndDescendant)
+    {
+        const AZ::EntityId holder = Things().Spawn("Holder", AZ::Transform::CreateIdentity());
+        const AZ::EntityId middle = Things().SpawnOwned(holder, "Holder");
+        const AZ::EntityId pouch = Things().SpawnOwned(middle, "Holder");
+        const AZ::EntityId bead = Things().SpawnOwned(pouch, "Holder");
+        const AZ::EntityId rock = Things().Spawn("Rock", AZ::Transform::CreateIdentity());
+        auto& holderEvents = FindPart<TestListenerPart>(holder)->m_events;
+        auto& beadEvents = FindPart<TestListenerPart>(bead)->m_events;
+
+        holderEvents.clear();
+        ASSERT_TRUE(Things().Transfer(rock, pouch));
+        EXPECT_EQ(holderEvents.back(), "TreeChanged") << "the top owner hears of a Thing put deep inside it";
+
+        holderEvents.clear();
+        beadEvents.clear();
+        ASSERT_TRUE(Things().Transfer(pouch, AZ::EntityId()));
+        EXPECT_EQ(holderEvents.back(), "TreeChanged") << "and of one taken out";
+        EXPECT_EQ(beadEvents.back(), "AncestryChanged") << "what the moved Thing owns hears it has new ancestors";
+
+        holderEvents.clear();
+        Things().Destroy(bead);
+        EXPECT_TRUE(holderEvents.empty()) << "the pouch is no longer the holder's";
+        ASSERT_TRUE(Things().Transfer(pouch, middle));
+        holderEvents.clear();
+        Things().Destroy(rock);
+        EXPECT_EQ(holderEvents.back(), "TreeChanged") << "a Thing destroyed deep inside counts too";
+    }
+
+    TEST_F(ThingSpawnTests, OwnedLooksFollowTheNearestAncestorWithABody)
+    {
+        AddBlueprints(R"({
+            "Torch":  {"Parts": {"Transform": {"$type": "TransformComponent"},
+                                 "Body": {"$type": "ThingBodyComponent", "Looks": {"Held": {"Socket": "Hand"}}}}},
+            "Hand":   {"Children": {"Torch": {"Blueprint": "Torch"}}},
+            "Bearer": {"Parts": {"Transform": {"$type": "TransformComponent"}, "Body": {"$type": "ThingBodyComponent"}},
+                       "Children": {"HandL": {"Blueprint": "Hand"}}}
+        })");
+        const auto isShown = [](AZ::EntityId thing)
+        {
+            bool shown = false;
+            ThingBodyRequestBus::EventResult(shown, thing, &ThingBodyRequests::IsShown);
+            return shown;
+        };
+        const AZ::EntityId bearer = Things().Spawn("Bearer", AZ::Transform::CreateIdentity());
+        const AZ::EntityId hand = Things().FindOwnedByKey(bearer, "HandL");
+        const AZ::EntityId torch = Things().FindOwnedByKey(hand, "Torch");
+        ASSERT_TRUE(torch.IsValid());
+        ThingBodyRequestBus::Event(torch, &ThingBodyRequests::SetLook, AZStd::string("Held"));
+        EXPECT_TRUE(isShown(torch));
+        ThingBodyRequestBus::Event(bearer, &ThingBodyRequests::SetShown, false);
+        EXPECT_FALSE(isShown(torch)) << "a hidden bearer hides what its hand holds";
+        ThingBodyRequestBus::Event(bearer, &ThingBodyRequests::SetShown, true);
+        EXPECT_TRUE(isShown(torch));
+
+        const AZ::EntityId other = Things().Spawn("Bearer", AZ::Transform::CreateIdentity());
+        ASSERT_TRUE(Things().Transfer(hand, other));
+        ThingBodyRequestBus::Event(other, &ThingBodyRequests::SetShown, false);
+        EXPECT_FALSE(isShown(torch)) << "the torch follows its hand to the new bearer";
     }
 
     TEST_F(ThingSpawnTests, ASnapshotWithoutPartsWarns)

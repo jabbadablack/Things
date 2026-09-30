@@ -16,7 +16,10 @@ namespace Things
     {
     public:
         //! How deep owned children may nest, so a blueprint that owns itself can't build forever.
-        static constexpr AZ::u32 MaxChildDepth = 8;
+        static constexpr AZ::u32 MaxChildDepth = 16;
+
+        //! The key of a snapshot's key among what its owner owned.
+        static constexpr const char* KeyKey = "Key";
 
         //! The key of a snapshot's list of the snapshots of what the Thing owned.
         static constexpr const char* OwnedKey = "Owned";
@@ -48,6 +51,7 @@ namespace Things
         AZ::EntityId BuildAt(
             const rapidjson::Value& resolved,
             const AZStd::string& name,
+            const AZStd::string& key,
             const AZ::Transform& transform,
             AZ::EntityId owner,
             AZ::u32 depth,

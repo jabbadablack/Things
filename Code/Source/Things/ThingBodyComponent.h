@@ -72,6 +72,9 @@ namespace Things
         //! The owner's body spawned: sits the current look on its socket.
         void OnBodySpawned() override;
 
+        //! Something above the owner moved: follows the nearest ancestor with a body again.
+        void OnAncestryChanged() override;
+
         //! The owner's body showed or hid: so does the current look.
         void OnShownChanged(bool shown) override;
 
@@ -99,6 +102,12 @@ namespace Things
         //! The Thing's owner, or an invalid id while top-level.
         AZ::EntityId GetOwner() const;
 
+        //! The nearest Thing above this one with a body (e.g. the creature whose hand holds it), or an invalid id.
+        AZ::EntityId FindBearer() const;
+
+        //! Listens to the body of the nearest ancestor with one.
+        void FollowBearer();
+
         //! Whether the current look should show now.
         bool IsLookShowing() const;
 
@@ -114,7 +123,7 @@ namespace Things
         AZStd::unordered_set<AZStd::string> m_hiddenNow; //!< The parts hidden now.
         AZStd::unordered_map<AZStd::string, Spawned> m_spawned; //!< Every look's spawn, by name.
         AZStd::unordered_map<AZ::EntityId, bool> m_active; //!< Whether each body entity is active.
-        AZ::EntityId m_following; //!< The owner whose body notifications the Thing listens to.
+        AZ::EntityId m_following; //!< The nearest ancestor with a body, whose body notifications the Thing listens to.
         AZ::EntityId m_socket; //!< The socket entity the current look sits on, if any.
         bool m_lastShown = false; //!< Whether the body showed at the last update, to tell the owned when it changes.
     };

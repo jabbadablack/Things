@@ -41,6 +41,12 @@ namespace Things
         //! Sets the owner the Thing is built for; only before activation, which links it to the owner.
         void SetOwner(AZ::EntityId owner);
 
+        //! The key its owner's blueprint listed it under (e.g. "HandL"), or empty.
+        const AZStd::string& GetKey() const;
+
+        //! Sets the key it is known by among what its owner owns.
+        void SetKey(AZStd::string key);
+
         //! The Things this one owns, in order.
         const AZStd::vector<AZ::EntityId>& GetOwned() const;
 
@@ -68,6 +74,7 @@ namespace Things
 
     private:
         AZStd::string m_blueprint; //!< Blueprint name, or layers joined with '+'.
+        AZStd::string m_key; //!< The key it is known by among what its owner owns, or empty.
         AZ::EntityId m_owner; //!< The owning Thing, or invalid when top-level.
         AZStd::vector<AZ::EntityId> m_owned; //!< Owned Things, in order.
         AZStd::vector<AZStd::string> m_tags; //!< Tags from the blueprint, sorted.

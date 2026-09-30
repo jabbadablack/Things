@@ -42,6 +42,7 @@ namespace Things
             owner->m_owned.push_back(id);
         }
         ThingNotificationBus::Event(thing.m_owner, &ThingNotifications::OnOwnedAdded, id);
+        NotifyAncestors(thing.m_owner, id);
     }
 
     void ThingRegistry::Unregister(ThingComponent& thing)
@@ -111,8 +112,10 @@ namespace Things
         {
             ownerComponent->m_owned.push_back(thing);
             ThingNotificationBus::Event(newOwner, &ThingNotifications::OnOwnedAdded, thing);
+            NotifyAncestors(newOwner, thing);
         }
         ThingNotificationBus::Event(thing, &ThingNotifications::OnOwnerChanged, oldOwner, newOwner);
+        NotifyDescendants(thing);
         return true;
     }
 
@@ -201,6 +204,32 @@ namespace Things
         {
             owner->m_owned.erase(owned);
             ThingNotificationBus::Event(thing.m_owner, &ThingNotifications::OnOwnedRemoved, id);
+            NotifyAncestors(thing.m_owner, id);
         }
+    }
+
+    void ThingRegistry::NotifyAncestors(AZ::EntityId start, AZ::EntityId changed) const
+    {
+        const ThingComponent* current = Find(start);
+        for (AZ::u32 depth = 0; current && depth < MaxOwnershipDepth; ++depth)
+        {
+            const AZ::EntityId id = current->GetEntityId();
+            ThingNotificationBus::Event(id, &ThingNotifications::OnTreeChanged, changed);
+            current = Find(current->m_owner);
+        }
+    }
+
+    void ThingRegistry::NotifyDescendants(AZ::EntityId thing) const
+    {
+        Visit(
+            thing,
+            [thing](AZ::EntityId below, AZ::u32)
+            {
+                if (below != thing)
+                {
+                    ThingNotificationBus::Event(below, &ThingNotifications::OnAncestryChanged);
+                }
+                return VisitAction::Continue;
+            });
     }
 } // namespace Things
