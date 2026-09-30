@@ -240,8 +240,8 @@ namespace Things
         rapidjson::Value& target,
         rapidjson::Document::AllocatorType& allocator,
         const rapidjson::Value& layer,
-        AZStd::string_view name,
-        bool warnOnTypeChange)
+        [[maybe_unused]] AZStd::string_view name,
+        [[maybe_unused]] bool warnOnTypeChange)
     {
         const rapidjson::Value* layerParts = FindObject(layer, PartsKey);
         rapidjson::Value* targetParts = FindObject(target, PartsKey);

@@ -18,7 +18,7 @@ namespace Things
 
         AZ::JsonDeserializerSettings settings;
         settings.m_clearContainers = true;
-        settings.m_reporting = [context = AZStd::move(context)](AZStd::string_view message, ResultCode result, AZStd::string_view path)
+        settings.m_reporting = [context = AZStd::move(context)]([[maybe_unused]] AZStd::string_view message, ResultCode result, [[maybe_unused]] AZStd::string_view path)
         {
             if (result.GetProcessing() != Processing::Completed || result.GetOutcome() == Outcomes::Skipped)
             {

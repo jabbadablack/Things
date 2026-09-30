@@ -97,7 +97,7 @@ namespace Things
         {
             things.VisitTree(
                 root,
-                [&things](AZ::EntityId thing, AZ::u32 depth)
+                [&]([[maybe_unused]] AZ::EntityId thing, [[maybe_unused]] AZ::u32 depth)
                 {
                     AZ_Info(
                         "Things",
@@ -140,7 +140,7 @@ namespace Things
             {
                 const AZStd::vector<AZStd::string> names = things->GetBlueprintNames();
                 AZ_Info("Things", "%zu blueprints.\n", names.size());
-                for (const AZStd::string& name : names)
+                for ([[maybe_unused]] const AZStd::string& name : names)
                 {
                     AZ_Info("Things", "  %s\n", name.c_str());
                 }
@@ -172,7 +172,7 @@ namespace Things
                 return;
             }
 
-            for (const AZStd::string& source : things->GetBlueprintSources(argument))
+            for ([[maybe_unused]] const AZStd::string& source : things->GetBlueprintSources(argument))
             {
                 AZ_Info("Things", "From %s\n", source.c_str());
             }

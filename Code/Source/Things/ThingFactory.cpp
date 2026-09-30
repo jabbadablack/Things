@@ -17,7 +17,7 @@ namespace Things
     namespace
     {
         //! The names of the tags that are true.
-        AZStd::vector<AZStd::string> ReadTags(const rapidjson::Value& resolved, const AZStd::string& name)
+        AZStd::vector<AZStd::string> ReadTags(const rapidjson::Value& resolved, [[maybe_unused]] const AZStd::string& name)
         {
             AZStd::vector<AZStd::string> tags;
             const auto member = resolved.FindMember(BlueprintLibrary::TagsKey);
@@ -293,7 +293,7 @@ namespace Things
     }
 
     void ThingFactory::BuildChildren(
-        const rapidjson::Value& resolved, const AZStd::string& name, AZ::EntityId owner, AZ::u32 depth, AZStd::vector<AZ::EntityId>& built)
+        const rapidjson::Value& resolved, [[maybe_unused]] const AZStd::string& name, AZ::EntityId owner, AZ::u32 depth, AZStd::vector<AZ::EntityId>& built)
     {
         const auto children = resolved.FindMember(BlueprintLibrary::ChildrenKey);
         if (children == resolved.MemberEnd())
@@ -318,7 +318,7 @@ namespace Things
 
         for (const auto& child : children->value.GetObject())
         {
-            const char* childId = child.name.GetString();
+            [[maybe_unused]] const char* childId = child.name.GetString();
             const auto blueprint =
                 child.value.IsObject() ? child.value.FindMember(BlueprintLibrary::BlueprintKey) : child.value.MemberEnd();
             if (!child.value.IsObject() || blueprint == child.value.MemberEnd() || !blueprint->value.IsString())
