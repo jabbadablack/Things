@@ -65,6 +65,16 @@ namespace Things::Testing
         EXPECT_EQ(m_library.GetSources("Crate").size(), 2u);
     }
 
+    TEST_F(BlueprintLibraryTests, LayersFromASourceCanBeRemoved)
+    {
+        Add(R"({"Crate": {"Parts": {"P1": {"$type": "A", "A": 1}}}})");
+        Add(R"({"Crate": {"Parts": {"P1": {"A": 2}}}, "Hero7": {"Parts": {}}})", "run");
+        EXPECT_EQ(Number(m_library.Resolve("Crate"), { "Parts", "P1", "A" }), 2.0);
+        m_library.RemoveLayers("run");
+        EXPECT_EQ(Number(m_library.Resolve("Crate"), { "Parts", "P1", "A" }), 1.0) << "the file's own layer stays";
+        EXPECT_EQ(m_library.Resolve("Hero7"), nullptr) << "a name only the source defined is gone";
+    }
+
     TEST_F(BlueprintLibraryTests, ReplaceRemoveAndAddParts)
     {
         Add(R"({"Base": {"Parts": {"P2": {"$type": "A", "A": 1}, "P3": {"$type": "A"}, "P5": {"$type": "A", "A": 1}}}})");

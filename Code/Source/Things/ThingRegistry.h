@@ -3,6 +3,7 @@
 #include <AzCore/Component/EntityId.h>
 #include <AzCore/Interface/Interface.h>
 #include <AzCore/RTTI/RTTI.h>
+#include <AzCore/std/containers/set.h>
 #include <AzCore/std/containers/unordered_map.h>
 #include <AzCore/std/containers/vector.h>
 #include <Things/ThingSystemBus.h>
@@ -41,7 +42,8 @@ namespace Things
         //! The nearest Thing above this one that matches, or an invalid id.
         AZ::EntityId FindAncestor(AZ::EntityId thing, const AZStd::function<bool(AZ::EntityId)>& match) const;
 
-        //! Every Thing whose owner is not a registered Thing, ordered by id.
+        //! Every Thing whose owner is not a registered Thing, ordered by id; kept as Things come, go and change owner, so
+        //! asking costs only the top-level Things, not every Thing they own.
         AZStd::vector<AZ::EntityId> GetTopLevel() const;
 
         //! Number of registered Things.
@@ -61,6 +63,7 @@ namespace Things
         void NotifyDescendants(AZ::EntityId thing) const;
 
         AZStd::unordered_map<AZ::EntityId, ThingComponent*> m_things; //!< Registered Things by entity id.
+        AZStd::set<AZ::EntityId> m_topLevel; //!< Registered Things whose owner is not a registered Thing.
     };
 
     //! The global ThingRegistry, owned by the ThingSystemComponent.

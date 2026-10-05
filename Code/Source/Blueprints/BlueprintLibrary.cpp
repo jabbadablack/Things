@@ -98,6 +98,24 @@ namespace Things
         added.m_source = source;
     }
 
+    void BlueprintLibrary::RemoveLayers(AZStd::string_view source)
+    {
+        for (auto named = m_raw.begin(); named != m_raw.end();)
+        {
+            AZStd::vector<Layer> kept;
+            for (Layer& layer : named->second)
+            {
+                if (layer.m_source != source)
+                {
+                    kept.push_back(AZStd::move(layer));
+                }
+            }
+            named->second = AZStd::move(kept);
+            named = named->second.empty() ? m_raw.erase(named) : AZStd::next(named);
+        }
+        m_resolved.clear();
+    }
+
     const rapidjson::Value* BlueprintLibrary::Resolve(AZStd::string_view name)
     {
         const AZStd::string key(name);

@@ -137,6 +137,21 @@ namespace Things::Testing
         EXPECT_EQ(Things().GetTopLevelThings(), AZStd::vector<AZ::EntityId>{ rock });
     }
 
+    TEST_F(ThingSpawnTests, TopLevelThingsFollowTransfersAndOwnersComingAndGoing)
+    {
+        const AZ::EntityId rock = Things().Spawn("Rock", AZ::Transform::CreateIdentity());
+        const AZ::EntityId sword = Things().SpawnOwned(rock, "Sword");
+        ASSERT_TRUE(Things().Transfer(sword, AZ::EntityId()));
+        EXPECT_EQ(Things().GetTopLevelThings().size(), 2u) << "a sword given to nobody lies on its own";
+        ASSERT_TRUE(Things().Transfer(sword, rock));
+        EXPECT_EQ(Things().GetTopLevelThings(), AZStd::vector<AZ::EntityId>{ rock });
+
+        FindEntity(rock)->Deactivate();
+        EXPECT_EQ(Things().GetTopLevelThings(), AZStd::vector<AZ::EntityId>{ sword }) << "its owner isn't a Thing while inactive";
+        FindEntity(rock)->Activate();
+        EXPECT_EQ(Things().GetTopLevelThings(), AZStd::vector<AZ::EntityId>{ rock }) << "and owns it again once active";
+    }
+
     TEST_F(ThingSpawnTests, BadRequestsWarnAndBuildNothing)
     {
         TraceCounter trace;

@@ -101,6 +101,10 @@ namespace Things
         //! Returns false, with a warning, when the text isn't a JSON object.
         virtual bool AddBlueprintLayers(AZStd::string_view json, AZStd::string_view source) = 0;
 
+        //! Removes every blueprint layer AddBlueprintLayers added from a source, e.g. those a game made for a run that
+        //! ended, so they don't pile up.
+        virtual void RemoveBlueprintLayers(AZStd::string_view source) = 0;
+
         //! Reads every blueprint file of the game and its mods again.
         virtual void ReloadData() = 0;
 

@@ -468,6 +468,11 @@ namespace Things
         return m_library.AddFile(parsed.GetValue(), source);
     }
 
+    void ThingSystemComponent::RemoveBlueprintLayers(AZStd::string_view source)
+    {
+        m_library.RemoveLayers(source);
+    }
+
     void ThingSystemComponent::ReloadData()
     {
         if (ModDataRequests* modData = ModDataInterface::Get())

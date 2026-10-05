@@ -1,7 +1,6 @@
 #include <Things/ThingRegistry.h>
 
 #include <AzCore/std/algorithm.h>
-#include <AzCore/std/sort.h>
 #include <Things/ThingBus.h>
 #include <Things/ThingComponent.h>
 
@@ -18,9 +17,14 @@ namespace Things
         const AZ::EntityId id = thing.GetEntityId();
         AZ_Assert(!Find(id), "Thing %s registered twice.", id.ToString().c_str());
         m_things[id] = &thing;
+        for (const AZ::EntityId& owned : thing.m_owned)
+        {
+            m_topLevel.erase(owned);
+        }
 
         if (!thing.m_owner.IsValid())
         {
+            m_topLevel.insert(id);
             return;
         }
 
@@ -34,6 +38,7 @@ namespace Things
                 thing.m_blueprint.c_str(),
                 thing.m_owner.ToString().c_str());
             thing.m_owner.SetInvalid();
+            m_topLevel.insert(id);
             return;
         }
 
@@ -49,6 +54,14 @@ namespace Things
     {
         Detach(thing);
         m_things.erase(thing.GetEntityId());
+        m_topLevel.erase(thing.GetEntityId());
+        for (const AZ::EntityId& owned : thing.m_owned)
+        {
+            if (Find(owned))
+            {
+                m_topLevel.insert(owned);
+            }
+        }
     }
 
     ThingComponent* ThingRegistry::Find(AZ::EntityId thing) const
@@ -110,9 +123,14 @@ namespace Things
         component->m_owner = newOwner;
         if (ownerComponent)
         {
+            m_topLevel.erase(thing);
             ownerComponent->m_owned.push_back(thing);
             ThingNotificationBus::Event(newOwner, &ThingNotifications::OnOwnedAdded, thing);
             NotifyAncestors(newOwner, thing);
+        }
+        else
+        {
+            m_topLevel.insert(thing);
         }
         ThingNotificationBus::Event(thing, &ThingNotifications::OnOwnerChanged, oldOwner, newOwner);
         NotifyDescendants(thing);
@@ -145,16 +163,7 @@ namespace Things
 
     AZStd::vector<AZ::EntityId> ThingRegistry::GetTopLevel() const
     {
-        AZStd::vector<AZ::EntityId> topLevel;
-        for (const auto& [id, thing] : m_things)
-        {
-            if (!Find(thing->m_owner))
-            {
-                topLevel.push_back(id);
-            }
-        }
-        AZStd::sort(topLevel.begin(), topLevel.end());
-        return topLevel;
+        return AZStd::vector<AZ::EntityId>(m_topLevel.begin(), m_topLevel.end());
     }
 
     size_t ThingRegistry::GetCount() const

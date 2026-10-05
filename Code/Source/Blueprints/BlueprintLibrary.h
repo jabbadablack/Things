@@ -51,6 +51,10 @@ namespace Things
         //! Returns false, with a warning, when the root isn't an object.
         bool AddFile(const rapidjson::Value& root, AZStd::string_view source);
 
+        //! Removes every layer added from a source, e.g. blueprints made for a run that ended; names left with no layer
+        //! are gone.
+        void RemoveLayers(AZStd::string_view source);
+
         //! Adds one definition layer for a name, on top of the existing ones.
         void AddLayer(AZStd::string_view name, const rapidjson::Value& layer, AZStd::string_view source);
 
