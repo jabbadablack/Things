@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**Things** is a shared O3DE 2.8 gem: a data-driven, moddable object model in the style of Caves of Qud, where everything in a game is a *Thing* built from JSON *blueprints*. It is registered in `~/.o3de/o3de_manifest.json` and used by the Enea project (`C:/Users/cisco/O3DE/Projects/Enea`). It builds as part of a project that enables it; it has no build tree of its own.
+**Things** is a shared O3DE 2.8 gem: a data-driven, moddable object model in the style of Caves of Qud, where everything in a game is a *Thing* built from JSON *blueprints*. It is a general-purpose gem for any project; keep game concepts out of it (see README.md). It is registered in `~/.o3de/o3de_manifest.json`; the Enea project (`C:/Users/cisco/O3DE/Projects/Enea`) uses it and is where it is developed. It builds as part of a project that enables it; it has no build tree of its own.
 
 **The gem knows nothing about any game.** No rules, grids, turns or genre concepts belong here. Game gems build on it through its buses.
 
@@ -42,7 +42,7 @@ Targets: `Things.API` (headers), `Things.Static` (all code), `Things` (the modul
 
 ## Building and testing
 
-Build and test from the project that enables the gem (Enea). From `C:/Users/cisco/O3DE/Projects/Enea`:
+Build and test from a project that enables the gem, e.g. from `C:/Users/cisco/O3DE/Projects/Enea`:
 
 ```powershell
 cmd /c 'call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat" >nul && ninja -C build\windows -f build-profile.ninja Things Things.Tests AzTestRunner'
@@ -61,7 +61,7 @@ cd build/windows/bin/profile; ./AzTestRunner.exe Things.Tests.dll AzRunUnitTests
 
 ## Coding guidelines
 
-The same rules as the Enea project, with the `things_` prefix:
+These rules, with the `things_` prefix:
 
 - **Design.** Clean Architecture in O3DE idioms: components, EBuses and `AZ::Interface`, reflection, the Settings Registry. Everything is moddable through data. Reuse before you write; don't add parallel architecture; replace, don't wrap; ask whether removing code solves the problem.
 - **Verification.** Never guess: check engine APIs in `C:/Users/cisco/O3DE/Engines/o3de/`. Ask the user about decisions that are theirs.
